@@ -133,3 +133,13 @@ data/
 hub/
 
 slurm/
+
+bash-test/
+
+runs_/
+
+hpc_exp_/
+
+*.bat
+
+3_test.txt
