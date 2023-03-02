@@ -138,6 +138,10 @@ bash-test/
 
 runs_/
 
+runs/
+
+model_save/
+
 hpc_exp_/
 
 *.bat
