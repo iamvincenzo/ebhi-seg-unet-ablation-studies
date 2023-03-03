@@ -130,11 +130,13 @@ dmypy.json
 
 data/
 
+other/
+
 hub/
 
 slurm/
 
-bash-test/
+bash_test/
 
 runs_/
 
