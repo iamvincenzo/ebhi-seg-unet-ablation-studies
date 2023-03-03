@@ -6,8 +6,10 @@ from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 
 from solver import Solver
-from plotting_utils import set_default, plot_samples, add_sample_hist
+from data_aug import AugmentData
+from data_cleaning import clean_dataset, remove_aug
 from dataloader_utils import balanced_dataset, EBHIDataset
+from plotting_utils import set_default, plot_samples, add_sample_hist
 
 
 def check_args_integrity(args, tn_l, te_l):
@@ -104,9 +106,12 @@ def get_args():
     parser.add_argument('--online_impl_net', action='store_true',
                         help='load online model implementation')
 
-    parser.add_argument('--dataset_aug', action='store_true',
+    parser.add_argument('--apply_transformations', action='store_true',
+                        help='Apply some transformations to images ad masks')
+
+    parser.add_argument('--dataset_aug', type=int, default=0,
                         help='Data augmentation of each class')
-    
+
     return parser.parse_args()
 
 
@@ -117,6 +122,14 @@ def main(args):
 
     set_default()
 
+    """ Dataset cleaning:
+        it has to be executed only the first time you unzip dataset 
+        because Low-grade IN: 639(imgs), 637(masks). """
+    # clean_dataset(args)
+
+    """ Data augmentation with albumentations. """
+    remove_aug(args) # remove augmented images if in the previous experiment we used data augmentation
+
     """ Creation of a well balanced dataset: 
         You need to take a certain percentage of examples (randomly) from each 
         class for the train and test/validation set, 80% and 20% respectively.
@@ -124,21 +137,27 @@ def main(args):
         Specifically, this function returns some lists of paths for image files, mask files
         both for train and test/validation set.
         
-        - w_clss is a list that contains the number of elements for each class in train-set.
-        - test_l is a list that contains the number of elements for each class in test set.         
+        - w_train_clss is a list that contains the number of elements for each class in train-set.
+        - w_test_clss is a list that contains the number of elements for each class in test set.         
         
         N.B: different random seeds generate different train and test/validation sets."""
-    img_files_train, mask_files_train, img_files_test, mask_files_test, w_clss, test_l = balanced_dataset(
-        args)
+    img_files_train, mask_files_train, img_files_test, mask_files_test, w_train_clss, w_test_clss = balanced_dataset(args)
+ 
+    """ Dataset augmentation, so so you need to create again training 
+        image/mask set with augmented images (created images). """
+    if args.dataset_aug > 0:
+        AugmentData(img_files_train, mask_files_train, args)
+        img_files_train, mask_files_train, img_files_test, mask_files_test, w_train_clss, w_test_clss = balanced_dataset(args)
 
     """ Adding histograms to tensorboard to represent the number of samples 
         for each class, both for train and test/validation set. """
     writer.add_figure('train_per_class_histo',
-                      add_sample_hist(w_clss, 'train'))
+                      add_sample_hist(w_train_clss, 'train'))
     writer.add_figure('test_per_class_histo',
-                      add_sample_hist(test_l, 'test'))
+                      add_sample_hist(w_test_clss, 'test'))
     writer.close()
 
+    # showing some samples
     print(f'First sample in train-set: {img_files_train[0]}')
     print(f'First sample in test-set: {img_files_test[0]}\n')
 

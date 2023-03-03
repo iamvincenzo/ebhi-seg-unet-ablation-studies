@@ -22,6 +22,7 @@ class Solver(object):
         self.args = args
         self.model_name = 'ebhi-seg_u-net_{}.pth'.format(self.args.model_name)
 
+        """ You can choose between different models. """
         if self.args.pretrained_net == True:
             model = torch.hub.load('mateuszbuda/brain-segmentation-pytorch', 'unet',
                                    in_channels=3, out_channels=1, init_features=32, pretrained=True)
@@ -40,6 +41,7 @@ class Solver(object):
         if self.args.resume_train == True:
             self.load_model()
 
+        """ You can choose between different loss functions. """
         # define Loss function
         if self.args.loss == 'dc_loss':
             self.criterion = dc_loss
@@ -87,7 +89,6 @@ class Solver(object):
 
     """ Helper function used to binarize a tensor (mask)
         in order to compute accuracy, precision, recall, f1-score. """
-
     def binarization_tensor(self, mask, pred):
         transform = T.ToPILImage()
         binary_mask = transform(np.squeeze(mask)).convert('1')
@@ -99,7 +100,6 @@ class Solver(object):
 
     """ Helper function used to train the model with 
         early stopping implementatinon. """
-
     def train(self):
         # keep track of average training and test losses for each epoch
         avg_train_losses = []
@@ -223,6 +223,7 @@ class Solver(object):
         # if self.args.pretrained_net == False:
         #     self.kernel_analisys() # for debugging
         if self.args.online_impl_net == False:
+            print(f'\nStarting kernel activations analysis!\n')
             self.activation_analisys()
 
         self.writer.flush()
@@ -230,7 +231,6 @@ class Solver(object):
         print('Finished Training!\n')
 
     """ Helper function used to evaluate the model on the test set. """
-
     def test(self, test_losses):
         self.net.eval()  # put net into evaluation mode
 
@@ -285,7 +285,6 @@ class Solver(object):
 
     """ Helper function used to visualize show some samples at
         the first batch of each epoch to check model improvements. """
-
     def check_results(self, batch, epoch):
         with torch.no_grad():
             if batch == 1:
@@ -302,8 +301,8 @@ class Solver(object):
 
                 self.net.train()
 
-    """ Helper function used to visualize CNN kernels. """
 
+    """ Helper function used to visualize CNN kernels. """
     def kernel_analisys(self):
 
         layer_list = [self.net.down_1, self.net.down_2, self.net.down_3,
@@ -313,8 +312,8 @@ class Solver(object):
 
         kernels_viewer(layer_list, self.net.output, self.writer)
 
-    """ Helper function used to visualize CNN activations. """
 
+    """ Helper function used to visualize CNN activations. """
     def activation_analisys(self):
 
         if self.args.pretrained_net == True:

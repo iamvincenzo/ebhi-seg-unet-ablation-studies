@@ -130,11 +130,11 @@ class EBHIDataset(Dataset):
         self.image_paths = image_paths
         self.target_paths = target_paths
         self.args = args
-        random.seed(args.random_seed)  # hyperparameter used to create different random-sets
+        # random.seed(args.random_seed)  # hyperparameter used to create different random-sets ???
 
     def transform(self, image, mask):
         # data augmentation
-        if self.args.dataset_aug == True:
+        if self.args.apply_transformations == True:
             # random horizontal flipping (we apply transforms here because we need to apply
             # them with the same probability to both img and mask)
             if random.random() > 0.5:
@@ -150,15 +150,11 @@ class EBHIDataset(Dataset):
                 image = TF.rotate(image, angle)
                 mask = TF.rotate(mask, angle)
 
-        # transform to tensor
-        image = TF.to_tensor(image)
-        mask = TF.to_tensor(mask)
-
-        # remove the alpha channel if present
-        trnsf = transforms.Compose([transforms.Lambda(lambda x: x[:3])])
-
+        # to tensor and remove the alpha channel if present (PNG format)
+        trnsf = transforms.Compose([transforms.ToTensor(),
+                                    transforms.Lambda(lambda x: x[:3])])
         image = trnsf(image)
-        mask = trnsf(image)
+        mask = trnsf(mask)
 
         # input normalization
         if self.args.norm_input == True:
