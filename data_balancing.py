@@ -1,106 +1,159 @@
-"""
-This code is for dealing with imbalanced datasets in PyTorch. Imbalanced datasets 
-are those where the number of samples in one or more classes is significantly lower 
-than the number of samples in the other classes. This can be a problem because it 
-can lead to a model that is biased towards the more common classes, which can result 
-in poor performance on the less common classes.
+##################################################################################################################################
+# SOME REFERENCE: https://github.com/aladdinpersson/Machine-Learning-Collection/tree/master/ML/Pytorch/Basics/Imbalanced_classes #
+##################################################################################################################################
 
-To deal with imbalanced datasets, this code implements two methods: oversampling and 
-class weighting.
-
-Oversampling involves generating additional samples for the underrepresented classes, 
-while class weighting involves assigning higher weights to the loss of samples in the 
-underrepresented classes, so that the model pays more attention to them.
-
-In this code, the get_loader function takes a root directory for a dataset and a batch 
-size, and returns a PyTorch data loader. The data loader is used to iterate over the 
-dataset in batches. The get_loader function first applies some transformations to the 
-images in the dataset using the transforms module from torchvision. Then it calculates 
-the class weights based on the number of samples in each class. It then creates a 
-WeightedRandomSampler object, which is used to randomly select a batch of samples with a 
-probability proportional to their weights. Finally, it creates the data loader using the 
-dataset and the weighted random sampler.
-
-The main function then uses the data loader to iterate over the dataset for 10 epochs, 
-and counts the number of samples in each class. Finally, it prints the counts for each class.
-
-Programmed by Aladdin Persson <aladdin.persson at hotmail dot com>
-* 2020-04-08: Initial coding
-* 2021-03-24: Added more detailed comments also removed part of
-              check_accuracy which would only work specifically on MNIST.
-* 2022-12-19: Updated detailed comments, small code revision, checked code still works with latest PyTorch. 
-"""
-
-import torch
-import torchvision.datasets as datasets
-import os
 from torch.utils.data import WeightedRandomSampler, DataLoader
-import torchvision.transforms as transforms
-import torch.nn as nn
-
-# Methods for dealing with imbalanced datasets:
-# 1. Oversampling (probably preferable)
-# 2. Class weighting
+from dataloader_utils import get_proportioned_dataset, EBHIDataset
 
 
-def get_loader(root_dir, batch_size):
-    my_transforms = transforms.Compose(
-        [
-            transforms.Resize((224, 224)),
-            transforms.ToTensor(),
-        ]
-    )
+""" Custom class that uses 'WeightedRandomSampler' to sample 
+    from dataset such that the model sees approximately each
+    class the same number of times. """
+class BalanceDataset():
+    def __init__(self, args):
+        super(BalanceDataset, self).__init__()
 
-    dataset = datasets.ImageFolder(root=root_dir, transform=my_transforms)
-    subdirectories = dataset.classes
-    class_weights = []
+        self.args = args
 
-    # loop through each subdirectory and calculate the class weight
-    # that is 1 / len(files) in that subdirectory
-    for subdir in subdirectories:
-        files = os.listdir(os.path.join(root_dir, subdir))
-        class_weights.append(1 / len(files))
+    """ This method is used to generates a well balanced 
+        trainloader: the pairs (image, mask) selected 
+        for training are equal in number for the 
+        various classes. """
+    def get_loader(self):
+        img_files_train, mask_files_train, _, _, w_train_clss, _ = get_proportioned_dataset(self.args)
 
-    sample_weights = [0] * len(dataset)
+        self.args.apply_transforms = True # forcing dataset creation to apply transformation
+        train_dataset = EBHIDataset(
+            img_files_train, mask_files_train, self.args)
 
-    for idx, (data, label) in enumerate(dataset):
-        class_weight = class_weights[label]
-        sample_weights[idx] = class_weight
+        """ As the number of elements per class increases, the weight of 
+            the class decreases, therefore the sampler considers more the 
+            classes with a high weight value (small number of elements). """
+        class_weights = []
+        for lenght in w_train_clss:
+            class_weights.append(1 / lenght) 
 
-    sampler = WeightedRandomSampler(
-        sample_weights, num_samples=len(sample_weights), replacement=True
-    )
+        print(f'Class-weights: {class_weights}')
 
-    loader = DataLoader(dataset, batch_size=batch_size, sampler=sampler)
-    
-    return loader
+        sample_weights = [0] * len(train_dataset)
+
+        for idx, (_, _, label) in enumerate(train_dataset):
+            class_weight = class_weights[label]
+            sample_weights[idx] = class_weight
+
+        sampler = WeightedRandomSampler(
+            sample_weights, num_samples=len(sample_weights), replacement=True)
+
+        train_dataloader = DataLoader(train_dataset, batch_size=self.args.bs_train,
+                                      num_workers=self.args.workers, sampler=sampler)
+
+        return train_dataloader, class_weights
 
 
-def main():
-    loader = get_loader(root_dir='./data/EBHI-SEG/', batch_size=8)
 
-    num_adeno = 0
-    num_hin = 0
-    num_lowin = 0
-    num_nomr = 0
-    num_polyp = 0
-    num_serradnm = 0
+""" Example of use 
+import torch
+import argparse
+from tqdm import tqdm
+
+def get_args():
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument('--bs_train', type=int, default=4,
+                        help='number of elements in training batch')
+    parser.add_argument('--bs_test', type=int, default=1,
+                        help='number of elements in test batch')
+    parser.add_argument('--workers', type=int, default=2,
+                        help='number of workers in data loader')
+    parser.add_argument('--print_every', type=int, default=445,
+                        help='print losses every N iteration')
+
+    parser.add_argument('--random_seed', type=int, default=1,
+                        help='random seed used to generate random train and test set')
+    parser.add_argument('--lr', type=float, default=0.0001,
+                        help='learning rate')
+    parser.add_argument('--loss', type=str, default='dc_loss',
+                        choices=['dc_loss', 'jac_loss'], help='loss function used for optimization')
+    parser.add_argument('--opt', type=str, default='SGD',
+                        choices=['SGD', 'Adam'], help='optimizer used for training')
+
+    parser.add_argument('--early_stopping', type=int, default=5,
+                        help='threshold used to manipulate the early stopping epoch tresh')
+
+    parser.add_argument('--norm_input', action='store_true',
+                        help='normalize input images')
+    parser.add_argument('--use_batch_norm', action='store_true',
+                        help='use batch normalization layers in model')
+    parser.add_argument('--use_double_batch_norm', action='store_true',
+                        help='use batch normalization layers in model')
+    parser.add_argument('--use_inst_norm', action='store_true',
+                        help='use instance normalization layers in model')
+    parser.add_argument('--use_double_inst_norm', action='store_true',
+                        help='use instance normalization layers in model')
+
+    parser.add_argument('--th', type=int, default=300,
+                        help='threshold used to manipulate the dataset-%-split')
+    parser.add_argument('--dataset_path', type=str, default='./data/EBHI-SEG/',
+                        help='path were to save/get the dataset')
+    parser.add_argument('--checkpoint_path', type=str,
+                        default='./model_save', help='path were to save the trained model')
+
+    parser.add_argument('--resume_train', action='store_true',
+                        help='load the model from checkpoint before training')
+
+    parser.add_argument('--pretrained_net', action='store_true',
+                        help='load pretrained model on BRAIN MRI')
+
+    parser.add_argument('--features', nargs='+',
+                        help='list of features value', default=[64, 128, 256, 512])
+    parser.add_argument('--arc_change_net', action='store_true',
+                        help='load online model implementation')
+
+    parser.add_argument('--apply_transformations', action='store_true',
+                        help='Apply some transformations to images ad masks')
+
+    parser.add_argument('--dataset_aug', type=int, default=0,
+                        help='Data augmentation of each class')
+
+    return parser.parse_args()
+
+
+def main(args):
+    balance_d = BalanceDataset(args)
+    train_dataloader = balance_d.get_loader()
+
+    num_normal = 0          # label - 0
+    num_polyp = 0            # label - 1
+    num_lowgradein = 0       # label - 2
+    num_highgradein = 0      # label - 3
+    num_adenocarcinoma = 0   # label - 4
+    num_serratedadenoma = 0  # label - 5
+
+    loop = tqdm(enumerate(train_dataloader),
+                total=len(train_dataloader), leave=False)
+
     for epoch in range(10):
-        for data, labels in loader:
-            num_adeno += torch.sum(labels == 0)
-            num_hin += torch.sum(labels == 1)
-            num_lowin += torch.sum(labels == 2)
-            num_nomr += torch.sum(labels == 3)
-            num_polyp += torch.sum(labels == 4)
-            num_serradnm += torch.sum(labels == 5)
+        for batch, (_, _, labels) in loop:
+            num_normal += torch.sum(labels == 0)
+            num_polyp += torch.sum(labels == 1)
+            num_lowgradein += torch.sum(labels == 2)
+            num_highgradein += torch.sum(labels == 3)
+            num_adenocarcinoma += torch.sum(labels == 4)
+            num_serratedadenoma += torch.sum(labels == 5)
 
-    print(num_adeno.item())
-    print(num_hin.item())
-    print(num_lowin.item())
-    print(num_nomr.item())
-    print(num_polyp.item())
-    print(num_serradnm.item())
+    print(f'\nWeightedRandomSampler sample from dataset such that the model ' +
+          f'sees approximately each class the same number of times: ')
+
+    print(f'Num Normal: {num_normal.item()}')
+    print(f'Num Polyp: {num_polyp.item()}')
+    print(f'Num Low-grade IN: {num_lowgradein.item()}')
+    print(f'Num High-grade IN: {num_highgradein.item()}')
+    print(f'Num Adenocarcinoma: {num_adenocarcinoma.item()}')
+    print(f'Num Serrated adenoma: {num_serratedadenoma.item()}')
 
 
 if __name__ == "__main__":
-    main()
+    args = get_args()
+    print(args)
+    main(args)
+"""

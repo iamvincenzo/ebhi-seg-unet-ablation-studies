@@ -8,31 +8,27 @@ import torchvision.transforms as T
 import torchvision.transforms.functional as TF
 
 from model import UNet
-from model_unet_online import UNET
+from arc_change_net import UNET
 from metrics import dc_loss, jac_loss, binary_jac, binary_acc, binary_prec, binary_rec, binary_f1s
 from plotting_utils import set_default, add_gradient_hist, add_metric_hist, plot_check_results, kernels_viewer, activations_viewer
 
-
+""" Solver for training and testing. """
 class Solver(object):
-    """ Solver for training and testing. """
-
     def __init__(self, train_loader, test_loader, device, writer, args):
         """ Initialize configurations. """
-
         self.args = args
         self.model_name = 'ebhi-seg_u-net_{}.pth'.format(self.args.model_name)
 
-        """ You can choose between different models. """
         if self.args.pretrained_net == True:
             model = torch.hub.load('mateuszbuda/brain-segmentation-pytorch', 'unet',
                                    in_channels=3, out_channels=1, init_features=32, pretrained=True)
-            print(f'Pretrained model implementation selected:\n {model}')
-        elif self.args.online_impl_net == True:
+            print(f'\nPretrained model implementation selected:\n\n {model}')
+        elif self.args.arc_change_net == True:
             model = UNET(self.args, 3, 1, [int(f) for f in self.args.features])
-            print(f'Online model implementation selected:\n {model}')
+            print(f'\nOnline model implementation selected:\n\n {model}')
         else:
             model = UNet(self.args)
-            print(f'Standard model implementation selected:\n {model}')
+            print(f'\nStandard model implementation selected:\n\n {model}')
 
         # define the model
         self.net = model.to(device)
@@ -41,15 +37,16 @@ class Solver(object):
         if self.args.resume_train == True:
             self.load_model()
 
-        """ You can choose between different loss functions. """
         # define Loss function
         if self.args.loss == 'dc_loss':
             self.criterion = dc_loss
+            print(f'\nDC_loss selected!\n')
         elif self.args.loss == 'jac_loss':
             self.criterion = jac_loss
-        
-        if self.args.online_impl_net == True:
+            print(f'\nJAC_loss selected!\n')
+        elif self.args.loss == 'bcewl_loss' and self.args.arc_change_net == True:
             self.criterion = nn.BCEWithLogitsLoss()
+            print(f'\nBCEWithLogitsLoss selected!\n')
 
         # choose optimizer
         if self.args.opt == "SGD":
@@ -68,12 +65,11 @@ class Solver(object):
         self.writer = writer
 
         # visualize the model we built on tensorboard
-        images, _, _ = next(iter(self.train_loader))
-        # images = images.to(device) ???
+        images, _, _ = next(iter(self.train_loader)) # images = images.to(device) ???
         self.writer.add_graph(self.net, images.to(self.device))
         self.writer.close()
 
-        set_default()
+        set_default() # setting fig-style
 
     def save_model(self):
         # if you want to save the model
@@ -222,13 +218,14 @@ class Solver(object):
 
         # if self.args.pretrained_net == False:
         #     self.kernel_analisys() # for debugging
-        if self.args.online_impl_net == False:
+        if self.args.arc_change_net == False:
             print(f'\nStarting kernel activations analysis!\n')
             self.activation_analisys()
 
         self.writer.flush()
         self.writer.close()
         print('Finished Training!\n')
+
 
     """ Helper function used to evaluate the model on the test set. """
     def test(self, test_losses):

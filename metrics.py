@@ -26,6 +26,7 @@ def jac_loss(pred, target):
 
     return (1 - jac) * smooth
 
+
 """ Jaccard index """
 def binary_jac(maskf, predf):
     m = BinaryJaccardIndex()

@@ -81,7 +81,7 @@ def add_metric_hist(metr_list, metr):
     fig = plt.figure(figsize=(5, 5))
     plt.bar(np.arange(len(metr_list)), metr_list, lw=1, color='b')
     plt.xticks(range(0, len(metr_list), 1), classes, rotation=90)
-    plt.ylim(bottom=0.0, top=1.0)
+    # plt.ylim(bottom=0.0, top=1.0)
 
     for i, v in enumerate(metr_list):
         plt.text(x=i-.26, y=v, s='{:.3f}'.format(v),

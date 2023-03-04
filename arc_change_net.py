@@ -81,21 +81,23 @@ class UNET(nn.Module):
         self.downs = nn.ModuleList()
         self.pool = nn.MaxPool2d(kernel_size=2, stride=2)
 
-        # Down part of UNET
+        self.args = args
+
+        # down part of UNET
         for feature in features:
-            self.downs.append(DoubleConv(args, in_channels, feature))
+            self.downs.append(DoubleConv(self.args, in_channels, feature))
             in_channels = feature
 
-        # Up part of UNET
+        # up part of UNET
         for feature in reversed(features):
             self.ups.append(
                 nn.ConvTranspose2d(
                     feature*2, feature, kernel_size=2, stride=2,
                 )
             )
-            self.ups.append(DoubleConv(args, feature*2, feature))
+            self.ups.append(DoubleConv(self.args, feature*2, feature))
 
-        self.bottleneck = DoubleConv(args, features[-1], features[-1]*2)
+        self.bottleneck = DoubleConv(self.args, features[-1], features[-1]*2)
         self.final_conv = nn.Conv2d(
             features[0], out_channels, kernel_size=1, padding=0)
         self.output_activation = nn.Sigmoid()
@@ -122,6 +124,9 @@ class UNET(nn.Module):
             x = self.ups[idx + 1](concat_skip)
 
         x = self.final_conv(x)
-        # x = self.output_activation(x)
+
+        # remember: arc_change_net can work both with bcewl_loss and dc_loss/jac_loss
+        if self.args.loss != 'bcewl_loss':
+            x = self.output_activation(x)
 
         return x

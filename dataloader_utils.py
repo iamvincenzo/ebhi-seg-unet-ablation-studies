@@ -26,7 +26,7 @@ def diff(l1, l2):
     return list(c - d)
 
 
-def balanced_dataset(args):
+def get_proportioned_dataset(args):
     classes = ['Normal', 'Polyp', 'Low-grade IN',
                'High-grade IN', 'Adenocarcinoma', 'Serrated adenoma']
 
@@ -53,6 +53,7 @@ def balanced_dataset(args):
             ex:  int(math.ceil(0.8 * 61)) = 49 vs. int(0.8 * 61) = 48. 
     """
     th = args.th  # threshold used to get 2226*0.8=1781 (num-img in train-set)
+
     # list that contains the weighted number of elements per class to create the train-set
     w_train_clss = []
     for i in lenghts:
@@ -125,15 +126,17 @@ class_dic = {
 }
 
 
+""" Custom class used to create the training and test sets. """
+
+
 class EBHIDataset(Dataset):
     def __init__(self, image_paths, target_paths, args, train=True):
         self.image_paths = image_paths
         self.target_paths = target_paths
         self.args = args
-        # random.seed(args.random_seed)  # hyperparameter used to create different random-sets ???
+        # random.seed(args.random_seed)  # hyperparameter used to repeatability of experiments with transformations
 
     def transform(self, image, mask):
-        # data augmentation
         if self.args.apply_transformations == True:
             # random horizontal flipping (we apply transforms here because we need to apply
             # them with the same probability to both img and mask)
@@ -156,7 +159,7 @@ class EBHIDataset(Dataset):
         image = trnsf(image)
         mask = trnsf(mask)
 
-        # input normalization
+        # input normalization if required
         if self.args.norm_input == True:
             image = TF.normalize(image, mean=(
                 0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5))
