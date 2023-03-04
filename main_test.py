@@ -122,7 +122,6 @@ def get_args():
                         default='./model_save', help='path were to save the trained model')
     ###################################################################
 
-
     # Model-types
     ###################################################################
     parser.add_argument('--pretrained_net', action='store_true',
@@ -136,13 +135,13 @@ def get_args():
                         help='list of features value', default=[64, 128, 256, 512])
     ###################################################################
 
-    # Data-manipulation
+    # Data-manipulation 
+    # (hint: select only one of the options below)
     ###################################################################
-    # HINT: select only one of the options below
     parser.add_argument('--apply_transformations', action='store_true',
                         help='Apply some transformations to images and corresponding masks')
     parser.add_argument('--dataset_aug', type=int, default=0,
-                        help='Data augmentation of each class') ############# ???? provaree ????
+                        help='Data augmentation of each class')
     parser.add_argument('--balanced_trainset', action='store_true',
                         help='generates a well balanced train_loader')
     ###################################################################
@@ -159,11 +158,11 @@ def main(args):
 
     set_default() # setting fig-style
 
-    """ Dataset cleaning:
-        it has to be executed only the first time you unzip dataset 
-        because Low-grade IN: 639(imgs), 637(masks). """
-    from data_cleaning import clean_dataset
-    clean_dataset(args) 
+    # """ Dataset cleaning:
+    #     it has to be executed only the first time you unzip dataset 
+    #     because Low-grade IN: 639(imgs), 637(masks). """
+    # from data_cleaning import clean_dataset
+    # clean_dataset(args) 
 
     """ Data augmentation with albumentations:
         remove augmented images if in the previous experiment we used data augmentation. """
@@ -237,7 +236,7 @@ def main(args):
 
     """ Specify the device type responsible to load a tensor into memory. """
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    print(f'\nDevice: {device}\n')
+    print(f'Device: {device}')
 
     """ Get some train-set samples (images) and display them
         in tensorboard. """
