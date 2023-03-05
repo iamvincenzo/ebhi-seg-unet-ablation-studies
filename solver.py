@@ -35,7 +35,7 @@ class Solver(object):
 
         # load a pretrained model
         if self.args.resume_train == True:
-            self.load_model()
+            self.load_model(device)
 
         # define Loss function
         if self.args.loss == 'dc_loss':
@@ -77,10 +77,10 @@ class Solver(object):
         torch.save(self.net.state_dict(), check_path)
         print('\nModel saved!\n')
 
-    def load_model(self):
+    def load_model(self, device):
         # function to load the model
         check_path = os.path.join(self.args.checkpoint_path, self.model_name)
-        self.net.load_state_dict(torch.load(check_path))
+        self.net.load_state_dict(torch.load(check_path, map_location=torch.device(device)))
         print('\nModel loaded!\n')
 
     """ Helper function used to binarize a tensor (mask)

@@ -3,7 +3,6 @@
 ######################################################################################################################################
 import torch
 import torch.nn as nn
-import torchvision.transforms.functional as TF
 
 
 class DoubleConv(nn.Module):
@@ -77,8 +76,9 @@ class DoubleConv(nn.Module):
 class UNET(nn.Module):
     def __init__(self, args, in_channels=3, out_channels=1, features=[64, 128, 256, 512]):
         super(UNET, self).__init__()
-        self.ups = nn.ModuleList()
         self.downs = nn.ModuleList()
+        self.ups = nn.ModuleList()
+        # self.downs = nn.ModuleList() ???
         self.pool = nn.MaxPool2d(kernel_size=2, stride=2)
 
         self.args = args
