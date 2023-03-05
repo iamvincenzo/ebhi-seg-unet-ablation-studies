@@ -526,6 +526,7 @@ def main(args):
 
 if __name__ == "__main__":
 
+    # ablation study over the best model
     argString = "--random_seed 0 --opt Adam --arc_change_net --use_double_inst_norm \
                  --balanced_trainset --early_stopping 3 --model_name unet_16_0t \
                  --filters_removal_perc 0.7"
