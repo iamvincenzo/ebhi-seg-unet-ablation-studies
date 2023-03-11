@@ -27,12 +27,19 @@ def jac_loss(pred, target):
     return (1 - jac) * smooth
 
 
+""" Custom loss """
+def custom_loss(pred, target):
+    alpha = 0.3 # 0.1
+    return ((1 - alpha) * dc_loss(pred, target)) + (alpha * jac_loss(pred, target))
+
+
 """ Jaccard index """
 def binary_jac(maskf, predf):
     m = BinaryJaccardIndex()
     m.update(maskf, predf)
 
     return m.compute()
+
 
 """ Accuracy = (tp + tn) / (tp + tn + fp + tn) """
 def binary_acc(maskf, predf):
@@ -41,6 +48,7 @@ def binary_acc(maskf, predf):
 
     return m.compute()
 
+
 """ Precision = tp / (tp + fp) """
 def binary_prec(maskf, predf):
     m = BinaryPrecision()
@@ -48,12 +56,14 @@ def binary_prec(maskf, predf):
 
     return m.compute()
 
+
 """ Recall = tp / (tp + fn) """
 def binary_rec(maskf, predf):
     m = BinaryRecall()
     m.update(maskf, predf)
 
     return m.compute()
+
 
 """ F1-score = 2 * ((P * R) / (P + R)) """
 def binary_f1s(maskf, predf):

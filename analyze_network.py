@@ -15,7 +15,7 @@ from torch.utils.data import DataLoader
 import torchvision.transforms.functional as TF
 from plotting_utils import plot_check_results
 from dataloader_utils import get_proportioned_dataset, EBHIDataset
-from metrics import dc_loss, jac_loss, binary_jac, binary_acc, binary_prec, binary_rec, binary_f1s
+from metrics import dc_loss, jac_loss, custom_loss, binary_jac, binary_acc, binary_prec, binary_rec, binary_f1s
 
 
 class AnalyzeNetwork(object):
@@ -55,6 +55,9 @@ class AnalyzeNetwork(object):
         elif self.args.loss == 'bcewl_loss' and self.args.arc_change_net == True:
             self.criterion = nn.BCEWithLogitsLoss()
             print(f'\nBCEWithLogitsLoss selected!\n')
+        elif self.args.loss == 'custom_loss':
+            self.criterion = custom_loss
+            print(f'\custom_loss selected!\n')
 
         check_path = os.path.join(self.args.checkpoint_path, self.model_name)
         self.net.load_state_dict(torch.load(

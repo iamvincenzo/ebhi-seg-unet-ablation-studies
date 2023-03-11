@@ -82,7 +82,7 @@ def get_args():
     parser.add_argument('--lr', type=float, default=0.0001,
                         help='learning rate')
     parser.add_argument('--loss', type=str, default='dc_loss',
-                        choices=['dc_loss', 'jac_loss', 'bcewl_loss'],
+                        choices=['dc_loss', 'jac_loss', 'bcewl_loss', 'custom_loss'],
                         help='loss function used for optimization')
     parser.add_argument('--opt', type=str, default='SGD',
                         choices=['SGD', 'Adam'], help='optimizer used for training')
@@ -141,9 +141,23 @@ def get_args():
     parser.add_argument('--apply_transformations', action='store_true',
                         help='Apply some transformations to images and corresponding masks')
     parser.add_argument('--dataset_aug', type=int, default=0,
-                        help='Data augmentation of each class')
+                        help='data augmentation of each class')
     parser.add_argument('--balanced_trainset', action='store_true',
                         help='generates a well balanced train_loader')
+    ###################################################################
+
+    # Ablation-Studies
+    ###################################################################
+    parser.add_argument('--global_ablation', action='store_true',
+                        help='starts an ablation study')
+    parser.add_argument('--selective_ablation', action='store_true',
+                        help='starts an ablation study')
+    parser.add_argument('--conv2d_prune_amount', type=float, default=0.4,
+                        help='conv2d prune amount')
+    parser.add_argument('--linear_prune_amount', type=float, default=0.2,
+                        help='linear prune amount')
+    parser.add_argument('--num_iterations', type=int, default=10,
+                        help='number of pruning iteration')
     ###################################################################
 
 
@@ -251,9 +265,13 @@ def main(args):
                     device=device,
                     writer=writer,
                     args=args)
-
+        
+    if args.global_ablation == True or args.selective_ablation == True:
+        solver.start_ablation_study()
+    
     # TRAIN model
-    solver.train()
+    else:
+        solver.train()
 
 
 if __name__ == "__main__":
@@ -261,5 +279,7 @@ if __name__ == "__main__":
     # if folder doesn't exist, then create it
     if not os.path.isdir(args.checkpoint_path):
         os.makedirs(args.checkpoint_path)
+    if not os.path.isdir('statistics'):
+        os.makedirs('statistics')
     print(args)
     main(args)

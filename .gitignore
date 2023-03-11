@@ -146,6 +146,10 @@ model_save/
 
 hpc_exp_/
 
+statistics/
+
+*.ipynb
+
 *.bat
 
 3_test.txt

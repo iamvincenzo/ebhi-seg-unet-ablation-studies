@@ -1,5 +1,7 @@
 import os
+import json
 import torch
+import datetime
 import numpy as np
 from tqdm import tqdm
 import torch.nn as nn
@@ -9,7 +11,8 @@ import torchvision.transforms.functional as TF
 
 from model import UNet
 from arc_change_net import UNET
-from metrics import dc_loss, jac_loss, binary_jac, binary_acc, binary_prec, binary_rec, binary_f1s
+from ablation_studies import AblationStudies
+from metrics import dc_loss, jac_loss, custom_loss, binary_jac, binary_acc, binary_prec, binary_rec, binary_f1s
 from plotting_utils import set_default, add_gradient_hist, add_metric_hist, plot_check_results, kernels_viewer, activations_viewer
 
 """ Solver for training and testing. """
@@ -17,36 +20,49 @@ class Solver(object):
     def __init__(self, train_loader, test_loader, device, writer, args):
         """ Initialize configurations. """
         self.args = args
-        self.model_name = 'ebhi-seg_u-net_{}.pth'.format(self.args.model_name)
+        self.model_name = 'ebhi_seg_{}.pth'.format(self.args.model_name)
+        # self.model_name = 'ebhi-seg_u-net_{}.pth'.format(self.args.model_name)
+
 
         if self.args.pretrained_net == True:
             model = torch.hub.load('mateuszbuda/brain-segmentation-pytorch', 'unet',
                                    in_channels=3, out_channels=1, init_features=32, pretrained=True)
             print(f'\nPretrained model implementation selected:\n\n {model}')
+
         elif self.args.arc_change_net == True:
             model = UNET(self.args, 3, 1, [int(f) for f in self.args.features])
             print(f'\nOnline model implementation selected:\n\n {model}')
+
         else:
             model = UNet(self.args)
             print(f'\nStandard model implementation selected:\n\n {model}')
 
+
         # define the model
         self.net = model.to(device)
 
+
         # load a pretrained model
-        if self.args.resume_train == True:
+        if self.args.resume_train == True or self.args.global_ablation == True or self.args.selective_ablation == True:
             self.load_model(device)
 
         # define Loss function
         if self.args.loss == 'dc_loss':
             self.criterion = dc_loss
             print(f'\nDC_loss selected!\n')
+
         elif self.args.loss == 'jac_loss':
             self.criterion = jac_loss
             print(f'\nJAC_loss selected!\n')
+
         elif self.args.loss == 'bcewl_loss' and self.args.arc_change_net == True:
             self.criterion = nn.BCEWithLogitsLoss()
             print(f'\nBCEWithLogitsLoss selected!\n')
+
+        elif self.args.loss == 'custom_loss':
+            self.criterion = custom_loss
+            print(f'\ncustom_loss selected!\n')
+
 
         # choose optimizer
         if self.args.opt == "SGD":
@@ -56,20 +72,22 @@ class Solver(object):
             self.optimizer = optim.Adam(
                 self.net.parameters(), lr=self.args.lr, betas=(0.9, 0.999))
 
+
         self.epochs = self.args.epochs
         self.train_loader = train_loader
         self.test_loader = test_loader
-
         self.device = device
-
         self.writer = writer
+
 
         # visualize the model we built on tensorboard
         images, _, _ = next(iter(self.train_loader)) # images = images.to(device) ???
         self.writer.add_graph(self.net, images.to(self.device))
         self.writer.close()
 
+
         set_default() # setting fig-style
+
 
     def save_model(self):
         # if you want to save the model
@@ -77,11 +95,14 @@ class Solver(object):
         torch.save(self.net.state_dict(), check_path)
         print('\nModel saved!\n')
 
+
     def load_model(self, device):
         # function to load the model
         check_path = os.path.join(self.args.checkpoint_path, self.model_name)
-        self.net.load_state_dict(torch.load(check_path, map_location=torch.device(device)))
+        self.net.load_state_dict(torch.load(check_path, 
+                                            map_location=torch.device(device)))
         print('\nModel loaded!\n')
+
 
     """ Helper function used to binarize a tensor (mask)
         in order to compute accuracy, precision, recall, f1-score. """
@@ -94,12 +115,14 @@ class Solver(object):
 
         return maskf, predf
 
+
     """ Helper function used to train the model with 
         early stopping implementatinon. """
     def train(self):
         # keep track of average training and test losses for each epoch
         avg_train_losses = []
         avg_test_losses = []
+        my_dic_train_results = {}
 
         # trigger for earlystopping
         earlystopping = False
@@ -172,22 +195,23 @@ class Solver(object):
                                            global_step=epoch * len(self.train_loader) + batch)
                     self.writer.add_scalar('batch_avg_test_dc', batch_avg_test_dc,
                                            global_step=epoch * len(self.train_loader) + batch)
-
+                    
+                    
+                    """ Saving some data in a dictionary (1). """                    
+                    my_dic_train_results['epoch'] = str(epoch)
+                    my_dic_train_results['global-step'] = str(epoch * len(self.train_loader) + batch)
+                    my_dic_train_results['avg_train_losses'] = [str(x) for x in avg_train_losses]
+                    my_dic_train_results['avg_test_losses'] = [str(x) for x in avg_test_losses]
+                    
+                    
                     if self.args.bs_test == 1:
-                        print(
-                            f'Dice for class {[np.average(x) for x in dc_class_test]}')
-                        print(
-                            f'Jaccard index custom for class {[np.average(x) for x in jac_cust_class_test]}')
-                        print(
-                            f'Binary Jaccard index for class {[np.average(x) for x in jac_class_test]}')
-                        print(
-                            f'Binary Accuracy for class {[np.average(x) for x in acc_class_test]}')
-                        print(
-                            f'Binary Precision for class {[np.average(x) for x in prec_class_test]}')
-                        print(
-                            f'Binary Recall for class {[np.average(x) for x in rec_class_test]}')
-                        print(
-                            f'Binary F1-score for class {[np.average(x) for x in f1s_class_test]}')
+                        print(f'Dice for class {[np.average(x) for x in dc_class_test]}')
+                        print(f'Jaccard index custom for class {[np.average(x) for x in jac_cust_class_test]}')
+                        print(f'Binary Jaccard index for class {[np.average(x) for x in jac_class_test]}')
+                        print(f'Binary Accuracy for class {[np.average(x) for x in acc_class_test]}')
+                        print(f'Binary Precision for class {[np.average(x) for x in prec_class_test]}')
+                        print(f'Binary Recall for class {[np.average(x) for x in rec_class_test]}')
+                        print(f'Binary F1-score for class {[np.average(x) for x in f1s_class_test]}')
 
                         # log a Matplotlib Figure showing the metric for each class
                         self.writer.add_figure('accuracy_histo', add_metric_hist([np.average(
@@ -196,9 +220,17 @@ class Solver(object):
                             x) for x in prec_class_test], 'Precision'), global_step=epoch * len(self.train_loader) + batch)
                         self.writer.add_figure('recall_histo', add_metric_hist([np.average(
                             x) for x in rec_class_test], 'Recall'), global_step=epoch * len(self.train_loader) + batch)
+                        
+                        """ Saving some data in a dictionary (2). """                    
+                        my_dic_train_results['dc_class_test_mean'] = [str(np.average(x)) for x in dc_class_test]
+                        my_dic_train_results['jac_cust_class_test_mean'] = [str(np.average(x)) for x in jac_cust_class_test]
+                        my_dic_train_results['jac_class_test_mean'] = [str(np.average(x)) for x in jac_class_test]
+                        my_dic_train_results['acc_class_test_mean'] = [str(np.average(x)) for x in acc_class_test]
+                        my_dic_train_results['prec_class_test_mean'] = [str(np.average(x)) for x in prec_class_test]
+                        my_dic_train_results['rec_class_test_mean'] = [str(np.average(x)) for x in rec_class_test]
+                        my_dic_train_results['f1s_class_test_mean'] = [str(np.average(x)) for x in f1s_class_test]
 
-                    print(
-                        f'\nGloabl-step: {epoch * len(self.train_loader) + batch}')
+                    print(f'\nGloabl-step: {epoch * len(self.train_loader) + batch}')
 
                     train_losses = []
                     test_losses = []
@@ -225,6 +257,9 @@ class Solver(object):
         self.writer.flush()
         self.writer.close()
         print('Finished Training!\n')
+
+        """ Saving collected results in a file. """
+        self.save_json(my_dic_train_results)
 
 
     """ Helper function used to evaluate the model on the test set. """
@@ -262,23 +297,18 @@ class Solver(object):
 
                     # per class metrics
                     dc_class_test[test_labels].append(1 - test_loss)
-                    jac_cust_class_test[test_labels].append(
-                        1 - jac_loss(test_pred, test_targets).item())
-                    jac_class_test[test_labels].append(
-                        binary_jac(maskf, predf))
-                    acc_class_test[test_labels].append(
-                        binary_acc(maskf, predf))
-                    prec_class_test[test_labels].append(
-                        binary_prec(maskf, predf))
-                    rec_class_test[test_labels].append(
-                        binary_rec(maskf, predf))
-                    f1s_class_test[test_labels].append(
-                        binary_f1s(maskf, predf))
+                    jac_cust_class_test[test_labels].append(1 - jac_loss(test_pred, test_targets).item())
+                    jac_class_test[test_labels].append(binary_jac(maskf, predf))
+                    acc_class_test[test_labels].append(binary_acc(maskf, predf))
+                    prec_class_test[test_labels].append(binary_prec(maskf, predf))
+                    rec_class_test[test_labels].append(binary_rec(maskf, predf))
+                    f1s_class_test[test_labels].append(binary_f1s(maskf, predf))
 
         self.net.train()  # put again the model in trainining-mode
 
         if self.args.bs_test == 1:
             return dc_class_test, jac_cust_class_test, jac_class_test, acc_class_test, prec_class_test, rec_class_test, f1s_class_test
+
 
     """ Helper function used to visualize show some samples at
         the first batch of each epoch to check model improvements. """
@@ -330,3 +360,22 @@ class Solver(object):
         img = img.to(self.device)
 
         activations_viewer(layer_list, self.net, self.writer, img, out_l)
+
+    
+    """ Helper function used to start some ablation studies. """
+    def start_ablation_study(self):
+        ablationNn = AblationStudies(self.args, self.model_name, self.train_loader, self.test_loader, 
+                                     self.net, self.criterion, self.device)
+        
+        if self.args.global_ablation == True:
+            ablationNn.iterative_pruning_finetuning()
+
+        elif self.args.selective_ablation == True:
+            ablationNn.selective_pruning()
+
+
+    """ Helper function used to save collected training statistics. """
+    def save_json(self, file):
+        with open('./statistics/my_dic_train_results_' + self.args.model_name + 
+                  '_' + datetime.datetime.now().strftime('%d%m%Y-%H%M%S') + '.json', 'w') as f:
+            json.dump(file, f)

@@ -1,4 +1,4 @@
-######################################################################################################################################
+#######################################################################################################################################
 # https://github.com/aladdinpersson/Machine-Learning-Collection/tree/master/ML/Pytorch/image_segmentation/semantic_segmentation_unet #
 ######################################################################################################################################
 import torch
@@ -9,7 +9,7 @@ class DoubleConv(nn.Module):
     def __init__(self, args, input_channels, output_channels):
         super(DoubleConv, self).__init__()
 
-        ######################################################################################################
+        #######################################################################################################
         # https://datascience.stackexchange.com/questions/46407/conv-bias-or-not-with-instance-normalization #
         ######################################################################################################
 
@@ -97,9 +97,11 @@ class UNET(nn.Module):
             )
             self.ups.append(DoubleConv(self.args, feature*2, feature))
 
+        # bottleneck of UNET
         self.bottleneck = DoubleConv(self.args, features[-1], features[-1]*2)
-        self.final_conv = nn.Conv2d(
-            features[0], out_channels, kernel_size=1, padding=0)
+        
+        self.final_conv = nn.Conv2d(features[0], out_channels, kernel_size=1, padding=0)
+        
         self.output_activation = nn.Sigmoid()
 
     def forward(self, x):
