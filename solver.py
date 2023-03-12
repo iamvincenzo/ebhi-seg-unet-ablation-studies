@@ -365,7 +365,7 @@ class Solver(object):
     """ Helper function used to start some ablation studies. """
     def start_ablation_study(self):
         ablationNn = AblationStudies(self.args, self.model_name, self.train_loader, self.test_loader, 
-                                     self.net, self.criterion, self.device)
+                                     self.net, self.criterion, self.device, self.writer)
         
         if self.args.global_ablation == True:
             ablationNn.iterative_pruning_finetuning()

@@ -14,16 +14,15 @@ import numpy as np
 from tqdm import tqdm
 import matplotlib.pyplot as plt
 import torchvision.transforms as T
-# from matplotlib.lines import Line2D
 import torch.nn.utils.prune as prune
-import torchvision.transforms.functional as TF
 from plotting_utils import plot_check_results
+import torchvision.transforms.functional as TF
 from metrics import jac_loss, binary_jac, binary_acc, binary_prec, binary_rec, binary_f1s
 
 
 
 class AblationStudies(object):
-    def __init__(self, args, model_name, train_loader, test_loader, model, criterion, device):
+    def __init__(self, args, model_name, train_loader, test_loader, model, criterion, device, writer):
         super(AblationStudies, self).__init__()
 
         self.args = args
@@ -33,6 +32,7 @@ class AblationStudies(object):
         self.model = model
         self.criterion = criterion
         self.device = device
+        self.writer = writer
 
         self.my_dic_ablation_results = {}
 
@@ -86,6 +86,30 @@ class AblationStudies(object):
         sparsity = num_zeros / num_elements
 
         return num_zeros, num_elements, sparsity
+
+
+    def remove_parameters(self):
+        for module_name, module in self.model.named_modules():
+            if isinstance(module, torch.nn.Conv2d):
+                try:
+                    prune.remove(module, "weight")
+                except:
+                    pass
+                try:
+                    prune.remove(module, "bias")
+                except:
+                    pass
+            elif isinstance(module, torch.nn.Linear):
+                try:
+                    prune.remove(module, "weight")
+                except:
+                    pass
+                try:
+                    prune.remove(module, "bias")
+                except:
+                    pass
+
+        return self.model
 
 
     def iterative_pruning_finetuning(self, num_epochs_per_iteration=10, grouped_pruning=False):
@@ -181,8 +205,15 @@ class AblationStudies(object):
         self.remove_parameters(self.model)
 
 
-    def selective_pruning(self, mod_name_list=['downs.0.conv.0'], # , 'downs.0.conv.3' 
+    def selective_pruning(self, mod_name_list=['downs.0.conv.0', 'downs.0.conv.3'], 
                           num_epochs_per_iteration=10, grouped_pruning=False):
+        
+        # print(self.model)
+        
+        # print some info before
+        # self.add_gradient_hist_mod(self.model)
+
+        self.plot_weights_distribution(mod_name_list, 'before-pruning')
         
         for i in range(self.args.num_iterations):
 
@@ -193,6 +224,7 @@ class AblationStudies(object):
             for module_name, module in self.model.named_modules():
                 for mod_name in mod_name_list:
                     if mod_name == module_name and isinstance(module, torch.nn.Conv2d):
+                        print(isinstance(module, torch.nn.Conv2d))
                         prune.random_structured(module,
                                                 name='weight',
                                                 amount=self.args.conv2d_prune_amount,
@@ -225,31 +257,10 @@ class AblationStudies(object):
             # to do
         
         # at the end remove the mask.
-        self.remove_parameters(self.model)
+        self.remove_parameters()
 
-
-    def remove_parameters(self):
-        for module_name, module in self.model.named_modules():
-            if isinstance(module, torch.nn.Conv2d):
-                try:
-                    prune.remove(module, "weight")
-                except:
-                    pass
-                try:
-                    prune.remove(module, "bias")
-                except:
-                    pass
-            elif isinstance(module, torch.nn.Linear):
-                try:
-                    prune.remove(module, "weight")
-                except:
-                    pass
-                try:
-                    prune.remove(module, "bias")
-                except:
-                    pass
-
-        return self.model
+        # print some info after
+        self.plot_weights_distribution(mod_name_list, 'after-pruning')
 
 
     def binarization_tensor(self, mask, pred):
@@ -372,33 +383,24 @@ class AblationStudies(object):
 
 ###########################################################################################################################
 
-    """
-    def add_gradient_hist_mod(self, net):
-        ave_grads = []
-        layers = []
-        for n, p in net.named_parameters():
-            if ('bias' not in n):
-                layers.append(n)
-                if p.requires_grad:  # indicates whether a variable is trainable
-                    ave_grad = np.abs(p.detach().numpy()).mean()
-                else:
-                    ave_grad = 0
-                ave_grads.append(ave_grad)
-
-        layers = [layers[i].replace(".weight", "") for i in range(len(layers))]
-
-        fig = plt.figure(figsize=(12, 12))
-        plt.bar(np.arange(len(ave_grads)), ave_grads, lw=1, color="b")
-        plt.xticks(range(0, len(ave_grads), 1), layers, rotation=90)
-        plt.xlabel("Layers")
-        plt.ylabel("average gradient")
-        plt.title("Gradient flow")
-        plt.legend([Line2D([0], [0], color="b", lw=4),
-                    Line2D([0], [0], color="k", lw=4)], ['mean-gradient', 'zero-gradient'])
-        plt.tight_layout()
-
-        return fig
-    """
+    def plot_weights_distribution(self, mod_name_list, s):
+        bins = 100
+        for mod in mod_name_list:
+            for module_name, module in self.model.named_modules():
+                if(mod == module_name):              
+                    # if isinstance(module, torch.nn.Conv2d) and ('bias' not in module_name):
+                    w = module.weight.view(-1)
+                    hist = torch.histc(w, bins=bins, min=torch.min(w).item(), max=torch.max(w).item(), out=None)
+                    fig = plt.figure(figsize=(5, 5))
+                    plt.bar(range(bins), hist, align='center', color=['forestgreen'])
+                    plt.xlabel('Bins')
+                    plt.ylabel('Frequency')
+                    title = f'Weights distribution of {module_name} module ' + s
+                    plt.title(title, fontsize=18)
+                    # plt.show()
+                    self.writer.add_figure(title, fig)
+                    break
+        self.writer.close()
 
     
 ###########################################################################################################################
