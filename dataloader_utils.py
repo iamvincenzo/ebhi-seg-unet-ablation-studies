@@ -134,10 +134,12 @@ class EBHIDataset(Dataset):
         self.image_paths = image_paths
         self.target_paths = target_paths
         self.args = args
+        self.train = train
         # random.seed(args.random_seed)  # hyperparameter used to repeatability of experiments with transformations
 
     def transform(self, image, mask):
-        if self.args.apply_transformations == True:
+         # transformation applied only if required and only to training images
+        if self.args.apply_transformations == True and self.train == True:
             # random horizontal flipping (we apply transforms here because we need to apply
             # them with the same probability to both img and mask)
             if random.random() > 0.5:

@@ -238,8 +238,8 @@ def main(args):
     # manage batches, transform the data, and much more.
     """ Custom dataset to load dataset that comes with additional information (mask):
         Dataset stores the samples and their corresponding labels. """
-    train_dataset = EBHIDataset(img_files_train, mask_files_train, args)
-    test_dataset = EBHIDataset(img_files_test, mask_files_test, args)
+    train_dataset = EBHIDataset(img_files_train, mask_files_train, args, train=True)
+    test_dataset = EBHIDataset(img_files_test, mask_files_test, args, train=False)
 
     """ DataLoader wraps an iterable around the Dataset to enable easy access to the samples
         according to a specific batch-size (load the data in memory). """

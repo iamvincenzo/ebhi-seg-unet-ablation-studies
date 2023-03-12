@@ -34,6 +34,8 @@ class AblationStudies(object):
         self.criterion = criterion
         self.device = device
 
+        self.my_dic_ablation_results = {}
+
 
     def measure_module_sparsity(self, module, weight=True, bias=False, use_mask=False):
         num_zeros = 0
@@ -87,6 +89,7 @@ class AblationStudies(object):
 
 
     def iterative_pruning_finetuning(self, num_epochs_per_iteration=10, grouped_pruning=False):
+        
         for i in range(self.args.num_iterations):
 
             print('Pruning and Finetuning {}/{}'.format(i + 1, self.args.num_iterations))
@@ -173,6 +176,9 @@ class AblationStudies(object):
 
         return model
         """
+        
+        # at the end remove the mask.
+        self.remove_parameters(self.model)
 
 
     def selective_pruning(self, mod_name_list=['downs.0.conv.0'], # , 'downs.0.conv.3' 
@@ -187,20 +193,63 @@ class AblationStudies(object):
             for module_name, module in self.model.named_modules():
                 for mod_name in mod_name_list:
                     if mod_name == module_name and isinstance(module, torch.nn.Conv2d):
-                        prune.l1_unstructured(module, 
-                                            name='weight', 
-                                            amount=self.args.conv2d_prune_amount)
+                        prune.random_structured(module,
+                                                name='weight',
+                                                amount=self.args.conv2d_prune_amount,
+                                                dim=0) # along batch
+                                                                        
+                        module_num_zeros, module_num_elements, sparsity = self.measure_module_sparsity(
+                            module, weight=True, bias=False, use_mask=True)
+
+                        print(f'\nnum_zeros: {module_num_zeros}, num_elements: {module_num_elements}, sparsity: {sparsity}')
+
+                        self.my_dic_ablation_results['sparsity-Conv2d'] = str(sparsity)
+
+                    elif mod_name == module_name and isinstance(module, torch.nn.Linear):
+                        prune.random_structured(module,
+                                                name='weight',
+                                                amount=self.args.linear_prune_amount,
+                                                dim=0) # along batch
+
+                        module_num_zeros, module_num_elements, sparsity = self.measure_module_sparsity(
+                            module, weight=True, bias=False, use_mask=True)
+                        
+                        print(f'\nnum_zeros: {module_num_zeros}, num_elements: {module_num_elements}, sparsity: {sparsity}')
+
+                        self.my_dic_ablation_results['sparsity-Linear'] = str(sparsity)
                         
             # test the model
-            self.test()       
-
-            # num_zeros, num_elements, sparsity = self.measure_global_sparsity(weight=True, bias=False,
-                                                                             # conv2d_use_mask=True, linear_use_mask=False)
-            
-            # print(f'Global Sparsity: {sparsity:.2f}\n')
+            self.test()
 
             # retrain model + ecc. ecc.
             # to do
+        
+        # at the end remove the mask.
+        self.remove_parameters(self.model)
+
+
+    def remove_parameters(self):
+        for module_name, module in self.model.named_modules():
+            if isinstance(module, torch.nn.Conv2d):
+                try:
+                    prune.remove(module, "weight")
+                except:
+                    pass
+                try:
+                    prune.remove(module, "bias")
+                except:
+                    pass
+            elif isinstance(module, torch.nn.Linear):
+                try:
+                    prune.remove(module, "weight")
+                except:
+                    pass
+                try:
+                    prune.remove(module, "bias")
+                except:
+                    pass
+
+        return self.model
 
 
     def binarization_tensor(self, mask, pred):
@@ -217,7 +266,6 @@ class AblationStudies(object):
         print(f'\nPerforming validation-test after pruning...\n')
 
         test_losses = []
-        my_dic_ablation_results = {}
 
         self.model.eval()  # put net into evaluation mode
 
@@ -264,7 +312,7 @@ class AblationStudies(object):
             batch_avg_test_loss = np.average(test_losses)
 
             """ Saving some data in a dictionary (1). """                    
-            my_dic_ablation_results['avg_test_losses'] = str(batch_avg_test_loss)
+            self.my_dic_ablation_results['avg_test_losses'] = str(batch_avg_test_loss)
 
             print(f'\nvalid_loss: {batch_avg_test_loss:.5f}\n')
 
@@ -278,13 +326,13 @@ class AblationStudies(object):
                 print(f'Binary F1-score for class {[np.average(x) for x in f1s_class_test]}')
 
                 """ Saving some data in a dictionary (2). """                    
-                my_dic_ablation_results['dc_class_test_mean'] = [str(np.average(x)) for x in dc_class_test]
-                my_dic_ablation_results['jac_cust_class_test_mean'] = [str(np.average(x)) for x in jac_cust_class_test]
-                my_dic_ablation_results['jac_class_test_mean'] = [str(np.average(x)) for x in jac_class_test]
-                my_dic_ablation_results['acc_class_test_mean'] = [str(np.average(x)) for x in acc_class_test]
-                my_dic_ablation_results['prec_class_test_mean'] = [str(np.average(x)) for x in prec_class_test]
-                my_dic_ablation_results['rec_class_test_mean'] = [str(np.average(x)) for x in rec_class_test]
-                my_dic_ablation_results['f1s_class_test_mean'] = [str(np.average(x)) for x in f1s_class_test]
+                self.my_dic_ablation_results['dc_class_test_mean'] = [str(np.average(x)) for x in dc_class_test]
+                self.my_dic_ablation_results['jac_cust_class_test_mean'] = [str(np.average(x)) for x in jac_cust_class_test]
+                self.my_dic_ablation_results['jac_class_test_mean'] = [str(np.average(x)) for x in jac_class_test]
+                self.my_dic_ablation_results['acc_class_test_mean'] = [str(np.average(x)) for x in acc_class_test]
+                self.my_dic_ablation_results['prec_class_test_mean'] = [str(np.average(x)) for x in prec_class_test]
+                self.my_dic_ablation_results['rec_class_test_mean'] = [str(np.average(x)) for x in rec_class_test]
+                self.my_dic_ablation_results['f1s_class_test_mean'] = [str(np.average(x)) for x in f1s_class_test]
 
             
             check_path = os.path.join(self.args.checkpoint_path, 'pruned_' + self.model_name)
@@ -294,7 +342,7 @@ class AblationStudies(object):
             """ Saving some statistics. """
             with open('./statistics/my_dic_ablation_results_' + self.args.model_name + 
                       '_' + datetime.datetime.now().strftime('%d%m%Y-%H%M%S') + '.json', 'w') as f:
-                json.dump(my_dic_ablation_results, f)
+                json.dump(self.my_dic_ablation_results, f)
 
             # print(f'Different conv-filters removed from each conv-layer: \n\n')
             # for x in self.removed_info:

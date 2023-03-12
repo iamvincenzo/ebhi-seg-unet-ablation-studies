@@ -26,7 +26,7 @@ class BalanceDataset():
         # forcing dataset creation to apply transformation
         self.args.apply_transformations = True
         train_dataset = EBHIDataset(
-            img_files_train, mask_files_train, self.args)
+            img_files_train, mask_files_train, self.args, train=True)
 
         """ As the number of elements per class increases, the weight of 
             the class decreases, therefore the sampler considers more the 
