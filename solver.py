@@ -21,8 +21,6 @@ class Solver(object):
         """ Initialize configurations. """
         self.args = args
         self.model_name = 'ebhi_seg_{}.pth'.format(self.args.model_name)
-        # self.model_name = 'ebhi-seg_u-net_{}.pth'.format(self.args.model_name)
-
 
         if self.args.pretrained_net == True:
             model = torch.hub.load('mateuszbuda/brain-segmentation-pytorch', 'unet',
@@ -37,13 +35,12 @@ class Solver(object):
             model = UNet(self.args)
             print(f'\nStandard model implementation selected:\n\n {model}')
 
-
         # define the model
         self.net = model.to(device)
 
-
         # load a pretrained model
-        if self.args.resume_train == True or self.args.global_ablation == True or self.args.selective_ablation == True:
+        if (self.args.resume_train == True or self.args.global_ablation == True 
+            or self.args.selective_ablation == True):
             self.load_model(device)
 
         # define Loss function
@@ -55,7 +52,8 @@ class Solver(object):
             self.criterion = jac_loss
             print(f'\nJAC_loss selected!\n')
 
-        elif self.args.loss == 'bcewl_loss' and self.args.arc_change_net == True:
+        elif (self.args.loss == 'bcewl_loss' 
+              and self.args.arc_change_net == True):
             self.criterion = nn.BCEWithLogitsLoss()
             print(f'\nBCEWithLogitsLoss selected!\n')
 
@@ -146,7 +144,12 @@ class Solver(object):
 
                 # forward + backward + optimize
                 pred = self.net(images)
-                loss = self.criterion(pred, targets)
+                
+                if self.args.loss == 'custom_loss':
+                    loss = self.criterion(pred, targets, self.args.val_custom_loss)
+                else:
+                    loss = self.criterion(pred, targets)
+
                 loss.backward()
 
                 # plot gradient histogram distribution ????
@@ -287,7 +290,11 @@ class Solver(object):
                 test_pred = self.net(test_images.detach())
 
                 # general loss
-                test_loss = self.criterion(test_pred, test_targets).item()
+                if self.args.loss == 'custom_loss':
+                    test_loss = self.criterion(test_pred, test_targets, self.args.val_custom_loss).item()
+                else:
+                    test_loss = self.criterion(test_pred, test_targets).item()
+
                 test_losses.append(test_loss)
 
                 if self.args.bs_test == 1:
@@ -379,3 +386,89 @@ class Solver(object):
         with open('./statistics/my_dic_train_results_' + self.args.model_name + 
                   '_' + datetime.datetime.now().strftime('%d%m%Y-%H%M%S') + '.json', 'w') as f:
             json.dump(file, f)
+
+
+    ############################################## PREVIEW ##################################################
+
+    """
+    def plot_kernels(self, tensor):
+        import matplotlib.pyplot as  plt
+        
+        if not tensor.ndim==4:
+            raise Exception("assumes a 4D tensor")
+        if not tensor.shape[-1]==3:
+            raise Exception("last dim needs to be 3 to plot")
+        
+        num_cols=tensor.shape[0]
+        num_kernels = tensor.shape[0]
+        num_rows = 1 #+ num_kernels // num_cols
+
+        print(num_cols, num_kernels, num_rows)
+
+        fig = plt.figure(figsize=(num_cols, num_rows))
+        for i in range(tensor.shape[0]):
+            ax1 = fig.add_subplot(num_rows,num_cols,i+1)
+            ax1.imshow(tensor[i])
+            ax1.axis('off')
+            ax1.set_xticklabels([])
+            ax1.set_yticklabels([])
+
+        # plt.subplots_adjust(wspace=0.5, hspace=0.5)
+        plt.show()
+
+
+    def get_tensor_distance(self, mod1, mod2):
+        p = mod1.weight.view(-1).detach().numpy()
+        q = mod2.weight.view(-1).detach().numpy()
+        
+        return np.sqrt(np.sum(np.square(p - q)))
+
+
+    def weights_distribution_analysis(self):
+        print('\nPerforming weights analysis distribution...\n')
+
+        model1_path = './model_save/ebhi_seg_unet_inittest.pth'
+        model2_path = './model_save/ebhi_seg_unet_no_inittest.pth'
+
+        self.net1 = UNET(self.args, 3, 1, [int(f) for f in self.args.features])
+        self.net1.load_state_dict(torch.load(model1_path, 
+                                             map_location=torch.device(self.device)))
+        self.net2 = UNET(self.args, 3, 1, [int(f) for f in self.args.features])
+        self.net2.load_state_dict(torch.load(model2_path, 
+                                             map_location=torch.device(self.device)))
+        
+        for (module_name1, module1), (module_name2, module2) in zip(self.net1.named_modules(), self.net2.named_modules()):
+
+            if (isinstance(module1, torch.nn.Conv2d) and ('bias' not in module_name1) 
+                and isinstance(module2, torch.nn.Conv2d) and ('bias' not in module_name2)):  
+
+                tensor1 = module1.weight.detach()
+                tensor2 = module2.weight.detach()
+
+                if tensor1.shape[0] > 64:
+                    tensor1 = tensor1[:64]
+
+                if tensor2.shape[0] > 64:
+                    tensor2 = tensor2[:64]
+                
+                tensor1 = tensor1 - tensor1.min()
+                tensor1 = tensor1 / tensor1.max()
+
+                tensor2 = tensor2 - tensor2.min()
+                tensor2 = tensor2 / tensor2.max()
+                
+                tensor1 = tensor1.numpy()
+                tensor2 = tensor2.numpy()
+                
+                self.plot_kernels(tensor1)
+                self.plot_kernels(tensor2)
+
+                # self.plot_kernels(module2.weight)              
+                
+                # distance = self.get_tensor_distance(module1, module2)
+
+                # print(f'Distance between {module_name1} and {module_name2}: {distance:.2f}')
+        """
+
+
+    #########################################################################################################

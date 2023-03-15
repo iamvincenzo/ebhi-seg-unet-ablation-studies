@@ -152,4 +152,6 @@ statistics/
 
 *.bat
 
+*.bash
+
 3_test.txt

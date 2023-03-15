@@ -84,6 +84,8 @@ def get_args():
     parser.add_argument('--loss', type=str, default='dc_loss',
                         choices=['dc_loss', 'jac_loss', 'bcewl_loss', 'custom_loss'],
                         help='loss function used for optimization')
+    parser.add_argument('--val_custom_loss', type=float, default=0.3,
+                        help='the value is the weight of the jac_loss')
     parser.add_argument('--opt', type=str, default='SGD',
                         choices=['SGD', 'Adam'], help='optimizer used for training')
     parser.add_argument('--early_stopping', type=int, default=5,
@@ -110,6 +112,8 @@ def get_args():
                         help='use instance normalization layers in each conv layer of the model')
     parser.add_argument('--use_double_inst_norm', action='store_true',
                         help='use 2 instance normalization layers in each conv layer of the model')
+    parser.add_argument('--weights_init', action='store_true',
+                        help='use weights initialization')
     ###################################################################
 
     # Data-parameters
@@ -152,13 +156,22 @@ def get_args():
                         help='starts an ablation study')
     parser.add_argument('--selective_ablation', action='store_true',
                         help='starts an ablation study')
-    parser.add_argument('--conv2d_prune_amount', type=float, default=0.4,
+    parser.add_argument('--conv2d_prune_amount', type=float, default=0.25,
                         help='conv2d prune amount')
     parser.add_argument('--linear_prune_amount', type=float, default=0.2,
                         help='linear prune amount')
     parser.add_argument('--num_iterations', type=int, default=10,
                         help='number of pruning iteration')
     ###################################################################
+
+    """
+    #################### PREVIW ####################
+    parser.add_argument('--weights_distr_analysis', action='store_true',
+                        help='starts an ablation study')
+    ######################################################
+    """
+
+    
 
 
     return parser.parse_args()
@@ -272,8 +285,13 @@ def main(args):
     # TRAIN model
     else:
         solver.train()
-
-
+    
+    """
+    elif args.weights_distr_analysis == True:
+        solver.weights_distribution_analysis()
+    """
+    
+    
 if __name__ == "__main__":
     args = get_args()
     # if folder doesn't exist, then create it

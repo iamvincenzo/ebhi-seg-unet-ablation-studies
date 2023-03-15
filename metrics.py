@@ -28,8 +28,7 @@ def jac_loss(pred, target):
 
 
 """ Custom loss """
-def custom_loss(pred, target):
-    alpha = 0.3 # 0.1
+def custom_loss(pred, target, alpha):    
     return ((1 - alpha) * dc_loss(pred, target)) + (alpha * jac_loss(pred, target))
 
 

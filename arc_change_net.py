@@ -1,6 +1,7 @@
 #######################################################################################################################################
 # https://github.com/aladdinpersson/Machine-Learning-Collection/tree/master/ML/Pytorch/image_segmentation/semantic_segmentation_unet #
 ######################################################################################################################################
+import os
 import torch
 import torch.nn as nn
 
@@ -104,6 +105,13 @@ class UNET(nn.Module):
         
         self.output_activation = nn.Sigmoid()
 
+        if self.args.weights_init == True:
+            self.initialize_weights()
+
+        self.save_initial_weights_distribution()
+
+
+
     def forward(self, x):
         skip_connections = []
 
@@ -132,3 +140,32 @@ class UNET(nn.Module):
             x = self.output_activation(x)
 
         return x
+    
+
+    def initialize_weights(self):
+        print('\nPerforming weights initialization...')
+
+        for m in self.modules():
+            if isinstance(m, nn.Conv2d):
+                nn.init.kaiming_uniform_(m.weight)
+                if m.bias is not None:
+                    nn.init.constant_(m.bias, 0)
+
+            elif isinstance(m, nn.BatchNorm2d):
+                nn.init.constant_(m.weight, 1)
+                nn.init.constant_(m.bias, 0)
+
+            elif isinstance(m, nn.InstanceNorm2d):
+                nn.init.constant_(m.weight, 1)
+                nn.init.constant_(m.bias, 0)
+
+            elif isinstance(m, nn.Linear):
+                nn.init.kaiming_uniform_(m.weight)
+                nn.init.constant_(m.bias, 0)
+
+
+    def save_initial_weights_distribution(self):
+        check_path = os.path.join(self.args.checkpoint_path, self.args.model_name + '_before_training')
+        torch.save(self.state_dict(), check_path)
+        print('\nModel saved (before training)!\n')
+
