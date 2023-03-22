@@ -1,5 +1,6 @@
 import cv2
 import numpy as np
+from glob import glob
 from PIL import Image
 import albumentations as A
 
@@ -8,11 +9,11 @@ import albumentations as A
     (ii) save them in order to augment data available 
     for training and testing (augment the entire dataset).  """
 class AugmentData():
-    def __init__(self, image_paths, mask_paths, args):
+    def __init__(self, args, image_paths, mask_paths):
         super(AugmentData, self).__init__()
-        self.image_paths = image_paths  # all the image paths of the dataset
-        self.mask_paths = mask_paths  # all the corresponding mask paths
         self.args = args
+        self.image_paths = image_paths  # all the image paths of the train-set
+        self.mask_paths = mask_paths  # all the corresponding mask paths
         self.augmentation()  # invoke the method
 
     def augmentation(self):
@@ -52,3 +53,12 @@ class AugmentData():
                 # saving transformed mask
                 im = Image.fromarray(augmented_mask)
                 im.save(sub_path_msk + '_aug_' + str(i + 1) + '_.png')
+
+    def get_augmented_train_set(self):
+        mask_files_train_aug_list = [fn for fn in glob(self.args.dataset_path + '*/label/*') if 'aug' in fn]
+        img_files_train_aug_list = []
+
+        for i in mask_files_train_aug_list:
+            img_files_train_aug_list.append(i.replace('label', 'image'))
+        
+        return img_files_train_aug_list, mask_files_train_aug_list

@@ -10,29 +10,38 @@ from dataloader_utils import get_proportioned_dataset, EBHIDataset
     from dataset such that the model sees approximately each
     class the same number of times. """
 class BalanceDataset():
-    def __init__(self, args):
+    def __init__(self, args, img_files_train, mask_files_train, w_train_clss):
         super(BalanceDataset, self).__init__()
-
         self.args = args
+        self.img_files_train = img_files_train
+        self.mask_files_train = mask_files_train
+        self.w_train_clss = w_train_clss
 
     """ This method is used to generates a well balanced 
         trainloader: the pairs (image, mask) selected 
         for training are equal in number for the 
         various classes. """
     def get_loader(self):
-        img_files_train, mask_files_train, _, _, w_train_clss, _ = get_proportioned_dataset(
-            self.args)
+        print(f'\nPerforming data balancing...\n')
+        
+        # Commentato perchè volendo applicare sia data augmentation che data balancing
+        # è necessario fornire il train-set aumentato. Inoltre, si evita di richiamare lo
+        # stesso metodo get_proportioned_dataset due volte. 
+        # Tuttavia, la riga di codice non viene rimossa poichè potrebbe essere utile per altri scopi
+        # futuri nel caso in cui BalanceDataset venga usata indipendentemente da get_proportioned_dataset prima.
+        # img_files_train, mask_files_train, _, _, w_train_clss, _ = get_proportioned_dataset(self.args)
 
-        # forcing dataset creation to apply transformation
-        self.args.apply_transformations = True
+        # forcing dataset creation to apply transformation if not applied with data-augmentation
+        if self.args.dataset_aug == 0:
+            self.args.apply_transformations = True
         train_dataset = EBHIDataset(
-            img_files_train, mask_files_train, self.args, train=True)
+            self.img_files_train, self.mask_files_train, self.args, train=True)
 
         """ As the number of elements per class increases, the weight of 
             the class decreases, therefore the sampler considers more the 
             classes with a high weight value (small number of elements). """
         class_weights = []
-        for lenght in w_train_clss:
+        for lenght in self.w_train_clss:
             class_weights.append(1/lenght)
 
         print(f'Class-weights: {class_weights}')

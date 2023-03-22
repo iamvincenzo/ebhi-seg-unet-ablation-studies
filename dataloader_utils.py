@@ -1,4 +1,3 @@
-# Dataset creation functions
 import math
 import random
 from PIL import Image
@@ -24,7 +23,6 @@ def diff(l1, l2):
     d = set(l1).intersection(set(l2))
 
     return list(c - d)
-
 
 def get_proportioned_dataset(args):
     classes = ['Normal', 'Polyp', 'Low-grade IN',
@@ -115,7 +113,6 @@ def get_proportioned_dataset(args):
 
     return img_files_train, mask_files_train, img_files_test, mask_files_test, w_train_clss, w_test_clss
 
-
 class_dic = {
     'Normal': 0,
     'Polyp': 1,
@@ -125,10 +122,7 @@ class_dic = {
     'Serrated adenoma': 5
 }
 
-
 """ Custom class used to create the training and test sets. """
-
-
 class EBHIDataset(Dataset):
     def __init__(self, image_paths, target_paths, args, train=True):
         self.image_paths = image_paths

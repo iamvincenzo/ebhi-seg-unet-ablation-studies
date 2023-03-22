@@ -24,7 +24,6 @@ from metrics import jac_loss, binary_jac, binary_acc, binary_prec, binary_rec, b
 class AblationStudies(object):
     def __init__(self, args, model_name, train_loader, test_loader, model, criterion, device, writer):
         super(AblationStudies, self).__init__()
-
         self.args = args
         self.model_name = model_name
         self.train_loader = train_loader
@@ -38,6 +37,8 @@ class AblationStudies(object):
         self.my_dic_ablation_results = {}
 
 
+    """ Helper function used to determine the number of zeros in the tensor (module), 
+        in order to determine the local percentage of ablation. """
     def measure_module_sparsity(self, module, weight=True, bias=False, use_mask=False):
         num_zeros = 0
         num_elements = 0
@@ -64,21 +65,20 @@ class AblationStudies(object):
         return num_zeros, num_elements, sparsity
 
 
+    """ Helper function used to determine the number of zeros in the model, 
+        in order to determine the global percentage of ablation. """
     def measure_global_sparsity(self, weight=True, bias=False, conv2d_use_mask=False, linear_use_mask=False):
-
         num_zeros = 0
         num_elements = 0
 
         for module_name, module in self.model.named_modules():
             if isinstance(module, torch.nn.Conv2d):
-
                 module_num_zeros, module_num_elements, _ = self.measure_module_sparsity(
                     module, weight=weight, bias=bias, use_mask=conv2d_use_mask)
                 num_zeros += module_num_zeros
                 num_elements += module_num_elements
 
             elif isinstance(module, torch.nn.Linear):
-
                 module_num_zeros, module_num_elements, _ = self.measure_module_sparsity(
                     module, weight=weight, bias=bias, use_mask=linear_use_mask)
                 num_zeros += module_num_zeros
@@ -89,6 +89,11 @@ class AblationStudies(object):
         return num_zeros, num_elements, sparsity
 
 
+    """ Helper function used to removes masks and original weights, not 
+        the pruning: values remain at zero but are unfrozen. The pruned 
+        parameter named name remains permanently pruned, and the parameter 
+        named name+'_orig' is removed from the parameter list. Similarly, 
+        the buffer named name+'_mask' is removed from the buffers. """
     def remove_parameters(self):
         for module_name, module in self.model.named_modules():
             if isinstance(module, torch.nn.Conv2d):
@@ -113,8 +118,9 @@ class AblationStudies(object):
         return self.model
 
 
+    """ Helper function used to prune the model. """
     def iterative_pruning_finetuning(self, num_epochs_per_iteration=10, grouped_pruning=False):
-        
+
         for i in range(self.args.num_iterations):
 
             print('Pruning and Finetuning {}/{}'.format(i + 1, self.args.num_iterations))
@@ -122,17 +128,25 @@ class AblationStudies(object):
             print('\nPruning...')
 
             if grouped_pruning == True:
-                # Global pruning
-                # I would rather call it grouped pruning.
                 parameters_to_prune = []
                 for _, module in self.model.named_modules():
                     if isinstance(module, torch.nn.Conv2d):
                         parameters_to_prune.append((module, 'weight'))
                 
-                # select a pruning technique
+                """ Globally prunes tensors corresponding to all parameters in parameters_to_prune 
+                    by applying the specified pruning_method. Modifies modules in place by:
+                        1. adding a named buffer called name+'_mask' corresponding to the binary 
+                            mask applied to the parameter name by the pruning method;
+                        2. replacing the parameter name by its pruned version, while the original 
+                            (unpruned) parameter is stored in a new parameter named name+'_orig'. 
+                    
+                    L1Unstructured:
+                        Prune (currently unpruned) units in a tensor by zeroing out the ones with the lowest L1-norm. """
                 prune.global_unstructured(parameters_to_prune,
-                                          pruning_method=prune.L1Unstructured,
+                                          pruning_method=prune.L1Unstructured, # select a pruning technique
                                           amount=self.args.conv2d_prune_amount)
+                
+                """ Pruning each module by conv2d_prune_amount/linear_prune_amount %. """
             else:
                 for _, module in self.model.named_modules():
                     if isinstance(module, torch.nn.Conv2d):
@@ -147,13 +161,12 @@ class AblationStudies(object):
             # test the model
             self.test()
 
-
             num_zeros, num_elements, sparsity = self.measure_global_sparsity(weight=True, bias=False,
                                                                              conv2d_use_mask=True, linear_use_mask=False)
             
             print(f'Global Sparsity: {sparsity:.2f}\n')
 
-            """
+            """ Fine-tuning
             # print(model.conv1._forward_pre_hooks)
 
             print("\nFine-tuning...")
@@ -202,24 +215,27 @@ class AblationStudies(object):
         return model
         """
         
-        # at the end remove the mask.
+        # at the end remove the mask and the original weights
         self.remove_parameters(self.model)
 
 
-    def selective_pruning(self, mod_name_list=['downs.0.conv.0'], #, 'downs.0.conv.3'], 
-                          num_epochs_per_iteration=10, grouped_pruning=False):
+    """ Helper function used to prune only the modules
+        passed as parameters. """
+    def selective_pruning(self, mod_name_list=['downs.0.conv.0']):
 
-        self.plot_weights_distribution(mod_name_list)
-        
         for i in range(self.args.num_iterations):
 
             print('Selective Pruning and Finetuning {}/{}'.format(i + 1, self.args.num_iterations))
 
-            print('\nPruning...')
-            
+            print('\nStarting pruning...')
+
             for module_name, module in self.model.named_modules():
                 for mod_name in mod_name_list:
                     if mod_name == module_name and isinstance(module, torch.nn.Conv2d):
+
+                        """ Prunes tensor corresponding to parameter called name in module by 
+                            removing the specified amount of (currently unpruned) channels along 
+                            the specified dim selected at random. """
                         prune.random_structured(module,
                                                 name='weight',
                                                 amount=self.args.conv2d_prune_amount,
@@ -245,6 +261,12 @@ class AblationStudies(object):
 
                         self.my_dic_ablation_results['sparsity-Linear' + mod_name] = str(sparsity)
 
+            
+            num_zeros, num_elements, sparsity = self.measure_global_sparsity(weight=True, bias=False,
+                                                                             conv2d_use_mask=True, linear_use_mask=False)
+            
+            print(f'Global Sparsity: {sparsity:.2f}\n')
+            
             # print some info after
             self.plot_weights_distribution(mod_name_list)
           
@@ -253,11 +275,10 @@ class AblationStudies(object):
 
             # retrain model + ecc. ecc.
             # to do
-        
-        # # at the end remove the mask.
-        # self.remove_parameters()
 
 
+    """ Helper function used to binarize a tensor (mask)
+        in order to compute binary accuracy, precision, recall, f1-score. """
     def binarization_tensor(self, mask, pred):
         transform = T.ToPILImage()
         binary_mask = transform(np.squeeze(mask)).convert('1')
@@ -268,6 +289,7 @@ class AblationStudies(object):
         return maskf, predf
 
 
+    """ Helper function used to test model's performance after pruning. """
     def test(self):
         print(f'\nPerforming validation-test after pruning...\n')
 
@@ -352,13 +374,8 @@ class AblationStudies(object):
                       '_' + datetime.datetime.now().strftime('%d%m%Y-%H%M%S') + '.json', 'w') as f:
                 json.dump(self.my_dic_ablation_results, f)
 
-            # print(f'Different conv-filters removed from each conv-layer: \n\n')
-            # for x in self.removed_info:
-            #     print(x)
 
-        # self.model.train()  # put again the model in trainining-mode
-
-
+    """ Helper function used to visulize model's performance after pruning."""
     def check_results(self, batch):
         with torch.no_grad():
             if batch % 50 == 49:
@@ -370,6 +387,9 @@ class AblationStudies(object):
                 mask = mask[0]
                 pred = self.model(img)
 
+                self.writer.add_figure('ablation_check_results', plot_check_results(
+                    img[0], mask, pred[0], label[0], self.args), global_step=len(self.train_loader) + batch)
+
                 fig = plot_check_results(
                     img[0], mask, pred[0], label[0], self.args)
 
@@ -379,7 +399,6 @@ class AblationStudies(object):
 
 
 ###########################################################################################################################
-
 
     def plot_kernels(self, tensor):
         import matplotlib.pyplot as  plt
@@ -406,7 +425,6 @@ class AblationStudies(object):
         plt.show(block=False)
         plt.pause(4)
         plt.close()
-
 
     def plot_weights_distribution(self, mod_name_list):
         for mod in mod_name_list:

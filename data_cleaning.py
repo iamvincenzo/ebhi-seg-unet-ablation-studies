@@ -1,8 +1,8 @@
 import os
 from glob import glob
 
-""" This helper function is used to get the different
-    elements in the two lists. """
+
+""" This helper function is used to get the different elements in the two lists. """
 def diff(l1, l2):
     c = set(l1).union(set(l2))
     d = set(l1).intersection(set(l2))

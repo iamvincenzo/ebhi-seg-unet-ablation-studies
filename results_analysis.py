@@ -1,10 +1,35 @@
-import json
-import numpy as np
-from glob import glob
-
 #########################################
 # BEST NETWORK-CONFIGURATION SELECTION #
 ########################################
+
+import json
+import argparse
+import numpy as np
+from glob import glob
+
+
+""" Helper function used to get cmd parameters. """
+def get_args():
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument('--get_best_net_config', action='store_true', default=True,
+                        help='get the best network configuration')
+    
+    parser.add_argument('--compare_ablation_results', action='store_true',
+                        help='compare ablation results')
+    
+    parser.add_argument('--statistics_path', type=str,
+                        default='./statistics', help='path were to get model statistics')
+    
+    parser.add_argument('--num_conf_per_it', type=int, default=3,
+                        help='number of json files per run')
+    
+    parser.add_argument('--model_name', type=str, default="first_train",
+                        help='name of the model to be saved/loaded')
+    
+
+    return parser.parse_args()
+
 
 """ Helper function used to get files-name. """
 def get_files_name(path):
@@ -13,12 +38,14 @@ def get_files_name(path):
     return files
 
 
-""" Helper function used to get 
-    the best network configuration. """
-def main(path):
+""" Helper function used to get the best network configuration. """
+def get_best_net_config(args):
+    print('\n\nGetting the best network configuration...')
+    path = args.statistics_path + '/*.json'
     files = get_files_name(path)
+    files = [f for f in files if 'ablation' not in f]
 
-    N = 3  # number of iteration per configuration
+    N = args.num_conf_per_it  # number of iteration per configuration
     idx = 0
     mean_test_losses = []
     mean_test_accs = []
@@ -86,41 +113,101 @@ def main(path):
     return mean_test_losses, mean_test_accs, mean_test_precs, mean_test_recs
 
 
-if __name__ == "__main__":
-    path = './statistics/*.json'
-    mean_test_losses, mean_test_accs, mean_test_precs, mean_test_recs = main(path)
+def compare_ablation_results(args):
+    print('\n\nGetting ablation studies statistics results...\n')
+    path = args.statistics_path + '/*.json'
+    files = get_files_name(path)
+    abl_files = [f for f in files if 'ablation' in f and args.model_name in f]
+    train_file = [f for f in files if 'ablation' not in f and args.model_name in f]
 
-    for idx, val in enumerate(mean_test_losses):
-        print(f'\n{idx+1}) Configuration: {val[0]}, \n \
-              mean-test-loss: {val[1]:.4f}, mean-train-loss: {val[2]:.4f}, abs-diff: {np.abs(val[1] - val[2]):.4f} \n \
-              mean-test per-class-accuracy: {mean_test_accs[val[3]]}, total: {np.mean(mean_test_accs[val[3]]):.4f} \n \
-              mean-test per-class-precision: {mean_test_precs[val[3]]}, total: {np.mean(mean_test_precs[val[3]]):.4f} \n \
-              mean-test per-class-recall: {mean_test_recs[val[3]]}, total: {np.mean(mean_test_recs[val[3]]):.4f}\n')
+    my_dict_train = {}
+    my_dict_abl = {}
+
+    with open(train_file[0]) as f:
+        my_dict_train = json.load(f)
+
+    for file in abl_files:
+        with open(file) as f:
+            my_dict_abl = json.load(f)
+
+            print('Test-losses differences:')
+
+            # if my_dict_abl_loss < my_dict_train_loss --> diff < 0 (good)
+            # if my_dict_abl_loss > my_dict_train_loss --> diff > 0 (not good)
+            # my_dict_abl_loss == my_dict_train_loss --> diff == 0 
+            diff = float(my_dict_abl['avg_test_losses']) - float(my_dict_train['avg_test_losses'][-1])
+            
+            var1 = float(my_dict_train['avg_test_losses'][-1])
+            var2 = float(my_dict_abl['avg_test_losses'])
+
+            print(f'my_dict_abl: {var2:.4f}, my_dict_train: {var1:.4f}, abs_diff: {diff}')
+
+            print('\nAccuracy differences:')
+
+            # statistics calculation: accuracy
+            l0 = np.array(my_dict_abl['prec_class_test_mean'])
+            l0 = l0.astype(np.float32)
+
+            l1 = np.array(my_dict_train['acc_class_test_mean'])
+            l1 = l1.astype(np.float32)
+           
+            print(f'abl: {l0}')
+
+            print(f'train: {l1}')
+
+            print(f'abl - train: {np.subtract(l0, l1)}\n')
+
+        print('\n')
+
+
+def main(args):
+    if args.get_best_net_config == True:
+        mean_test_losses, mean_test_accs, mean_test_precs, mean_test_recs = get_best_net_config(args)
+
+        for idx, val in enumerate(mean_test_losses):
+            print(f'\n{idx+1}) Configuration: {val[0]}, \n \
+                mean-test-loss: {val[1]:.4f}, mean-train-loss: {val[2]:.4f}, abs-diff: {np.abs(val[1] - val[2]):.4f} \n \
+                mean-test per-class-accuracy: {mean_test_accs[val[3]]}, total: {np.mean(mean_test_accs[val[3]]):.4f} \n \
+                mean-test per-class-precision: {mean_test_precs[val[3]]}, total: {np.mean(mean_test_precs[val[3]]):.4f} \n \
+                mean-test per-class-recall: {mean_test_recs[val[3]]}, total: {np.mean(mean_test_recs[val[3]]):.4f}\n')
+    
+    elif args.compare_ablation_results == True:
+        compare_ablation_results(args)
+
+
+if __name__ == "__main__":
+    args = get_args()
+    print(f'\n{args}')
+    main(args)
+
+
+
+    
         
     
-    """ The selection of the best configuration is based on:
-            - mean-test-loss;
-            - difference in absolute value between mean-test-loss and mean-train-loss;
-            - mean-accuracy, mean-precision, mean-recall.
-            
-        Output of the top-three best-configurations:
-
-            >   1) Configuration: unet_3_0_2t,
-                mean-test-loss: 0.0536, mean-train-loss: 0.0408, abs-diff: 0.0128 
-                mean-test per-class-accuracy: [0.9623189  0.96565896 0.9605729  0.9154892  0.89932853 0.9408622 ], total: 0.9407 
-                mean-test per-class-precision: [0.96945447 0.9783523  0.97588116 0.9515314  0.93830997 0.9434865 ], total: 0.9595 
-                mean-test per-class-recall: [0.9676378  0.9580894  0.96404046 0.9274319  0.91293246 0.9604456 ], total: 0.9484
-
-            >  2) Configuration: unet_10_1_2t, 
-               mean-test-loss: 0.0537, mean-train-loss: 0.0507, abs-diff: 0.0030 
-               mean-test per-class-accuracy: [0.9607262  0.96570706 0.9593335  0.9279091  0.9061057  0.9376357 ], total: 0.9429 
-               mean-test per-class-precision: [0.9698933  0.97131944 0.9687198  0.94207096 0.91854763 0.932326  ], total: 0.9505 
-               mean-test per-class-recall: [0.9625911  0.9608024  0.9652941  0.94738054 0.93374807 0.9594771 ], total: 0.9549
-
-            >  3) Configuration: unet_13_0_2t, 
-               mean-test-loss: 0.0576, mean-train-loss: 0.0482, abs-diff: 0.0094 
-               mean-test per-class-accuracy: [0.95846385 0.96584886 0.95859265 0.9265111  0.8954797  0.9469705 ], total: 0.9420 
-               mean-test per-class-precision: [0.96732664 0.9744399  0.97126913 0.94663805 0.9108305  0.95278716], total: 0.9539 
-               mean-test per-class-recall: [0.95924073 0.9580772  0.9619231  0.9409527  0.92701036 0.95817775], total: 0.9509
+""" The selection of the best configuration is based on:
+        - mean-test-loss;
+        - difference in absolute value between mean-test-loss and mean-train-loss;
+        - mean-accuracy, mean-precision, mean-recall.
         
-        The selected best-configuration is the 2nd. """
+    Output of the top-three best-configurations:
+
+        >  1) Configuration: unet_3_0_2t,
+              mean-test-loss: 0.0536, mean-train-loss: 0.0408, abs-diff: 0.0128 
+              mean-test per-class-accuracy: [0.9623189  0.96565896 0.9605729  0.9154892  0.89932853 0.9408622 ], total: 0.9407 
+              mean-test per-class-precision: [0.96945447 0.9783523  0.97588116 0.9515314  0.93830997 0.9434865 ], total: 0.9595 
+              mean-test per-class-recall: [0.9676378  0.9580894  0.96404046 0.9274319  0.91293246 0.9604456 ], total: 0.9484
+
+        >  2) Configuration: unet_13_0_2t, 
+              mean-test-loss: 0.0560, mean-train-loss: 0.0466, abs-diff: 0.0095 
+              mean-test per-class-accuracy: [0.9597576  0.9654646  0.95879984 0.90839267 0.8935342  0.9448583 ], total: 0.9385 
+              mean-test per-class-precision: [0.9671772  0.9744418  0.974854   0.9533973  0.9409496  0.95258427], total: 0.9606 
+              mean-test per-class-recall: [0.96462065 0.96160406 0.9628343  0.9156433  0.9021184  0.95946884], total: 0.9444
+
+        >  3) Configuration: unet_4_0_2t, 
+              mean-test-loss: 0.0576, mean-train-loss: 0.0526, abs-diff: 0.0050 
+              mean-test per-class-accuracy: [0.9571473  0.96196645 0.95727676 0.9050472  0.89431095 0.92810273], total: 0.9340
+              mean-test per-class-precision: [0.9668333 0.9768634 0.9731913 0.9419367 0.9312933 0.9322795], total: 0.9537
+              mean-test per-class-recall: [0.9624381  0.9533414  0.9623093  0.92224884 0.91217774 0.95272416], total: 0.9442
+    
+    The selected best-configuration is the 2nd. """

@@ -1,11 +1,12 @@
+import torch
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 from dataloader_utils import class_dic
 
+
 classes = ['Normal', 'Polyp', 'Low-grade IN',
            'High-grade IN', 'Adenocarcinoma', 'Serrated adenoma']
-
 
 """ Helper function used to set some style
     configurations. """
@@ -57,15 +58,10 @@ def add_gradient_hist(net):
 
     fig = plt.figure(figsize=(12, 12))
     plt.bar(np.arange(len(ave_grads)), ave_grads, lw=1, color="b")
-    # plt.hlines(0, 0, len(ave_grads) + 1, lw=2, color="k")
     plt.xticks(range(0, len(ave_grads), 1), layers, rotation=90)
-    # plt.xlim(left=0, right=len(ave_grads))
-    # zoom in on the lower gradient regions
-    # plt.ylim(bottom=-0.001, top=np.max(ave_grads) / 2)
     plt.xlabel("Layers")
     plt.ylabel("average gradient")
     plt.title("Gradient flow")
-    # plt.grid(True)
     plt.legend([Line2D([0], [0], color="b", lw=4),
                 Line2D([0], [0], color="k", lw=4)], ['mean-gradient', 'zero-gradient'])
     plt.tight_layout()
@@ -81,7 +77,6 @@ def add_metric_hist(metr_list, metr):
     fig = plt.figure(figsize=(5, 5))
     plt.bar(np.arange(len(metr_list)), metr_list, lw=1, color='b')
     plt.xticks(range(0, len(metr_list), 1), classes, rotation=90)
-    # plt.ylim(bottom=0.0, top=1.0)
 
     for i, v in enumerate(metr_list):
         plt.text(x=i-.26, y=v, s='{:.3f}'.format(v),
@@ -154,51 +149,50 @@ def plot_check_results(img, mask, pred, label, args):
     return fig
 
 
-""" Helper function used to visualize 
-    CNN kernels. """
-def kernels_viewer(layers_list, out_l, wrt):
-    index_list = [0, 2]
+""" Helper function used to visualize CNN kernels. """
+def kernels_viewer(model, wrt):
+    layers_list = []
     j = 0
 
-    for layer in layers_list:
-        for k in index_list:
-            # get the kernels from the first layer as per the name of the layer
-            if layer != out_l:
-                kernels = layer[k].weight.detach().clone().cpu()
-            else:
-                kernels = layer.weight.detach().clone().cpu()
+    for module_name, module in model.named_modules():
+        if isinstance(module, torch.nn.Conv2d):
 
-            ## check size for sanity check
-            # print(kernels.size())
+            kernels = module.weight.detach().clone().cpu()
 
-            n, c, w, h = kernels.shape
-            row_num = 8
+            if kernels.shape[0] > 1:
+                layers_list.append(module_name)
 
-            kernels = kernels.view(n*c, -1, w, h)
+                title = module_name + ' ' + str(kernels.shape)
 
-            rows = np.min((kernels.shape[0] // row_num + 1, 16))
+                if j == 0:
+                    cast_dim = kernels.shape[0] # used to get only the first cast_dim filters
+                    rows = 4
+                    cols = kernels.shape[0] // rows
 
-            if kernels.shape[0] > 64:
-                kernels = kernels[:64]
-            # normalize to (0,1) range so that matplotlib
-            # can plot them
-            kernels = kernels - kernels.min()
-            kernels = kernels / kernels.max()
+                n, c, w, h = kernels.shape
 
-            # filter_img = torchvision.utils.make_grid(kernels, nrow=rows)
+                # es. [32, 3, 3, 3] --> [96, 1, 3, 3] --> kernels[i].permute(1, 2, 0) --> img(3, 3, 1) = (w, h, c)
+                kernels = kernels.view(n*c, -1, w, h)
 
-            filter_img_fig = plt.figure(figsize=(15, len(layers_list)))
-            for i in range(kernels.shape[0]):
-                plt.subplot(row_num, rows, i + 1)
-                # change ordering since matplotlib requires images to be (H, W, C)
-                plt.imshow(kernels[i].permute(1, 2, 0))
-                plt.axis('off')
+                if kernels.shape[0] > cast_dim:
+                    kernels = kernels[:cast_dim] # [96, 1, 3, 3] --> [64, 1, 3, 3] (cast_dim=64)
 
-            # plt.show()
+                # normalize to (0, 1) range so that matplotlib can plot them
+                kernels = kernels - kernels.min()
+                kernels = kernels / kernels.max()
 
-            wrt.add_figure('filter_img_grid_' + str(j), filter_img_fig)
-            j += 1
+                filter_img_fig = plt.figure(figsize=(15, len(layers_list)))
+                
+                for i in range(kernels.shape[0]):
+                    plt.subplot(rows, cols, i + 1)
+                    plt.imshow(kernels[i].permute(1, 2, 0)) # change ordering since matplotlib requires images to be (H, W, C)
+                    plt.suptitle(title)
+                    plt.axis('off')
 
+                # plt.show()
+
+                wrt.add_figure('filter_img_grid_' + str(j), filter_img_fig)
+                j += 1
 
 # Use HOOKS
 conv_output = []
@@ -206,19 +200,13 @@ conv_output = []
 def append_conv(module, input, output):
     conv_output.append(output.detach().cpu()) # append all the conv layers and their respective wights to the list
 
-""" Helper function used to visualize 
-    CNN activations. """
-def activations_viewer(layers_list, net, wrt, img, out_l):
-    index_list = [0, 2]
+""" Helper function used to visualize CNN activations. """
+def activations_viewer(net, wrt, img):
     j = 0
 
-    for layer in layers_list:
-        for k in index_list:
-            # get the kernels from the first layer as per the name of the layer
-            if layer != out_l:
-                layer[k].register_forward_hook(append_conv)
-            else:
-                layer.register_forward_hook(append_conv)
+    for module_name, module in net.named_modules():
+        if isinstance(module, torch.nn.Conv2d):
+            module.register_forward_hook(append_conv)
 
     out = net(img)
 
@@ -237,7 +225,8 @@ def activations_viewer(layers_list, net, wrt, img, out_l):
             plt.title(f'{filter.shape[0]} x {filter.shape[1]}')
             plt.axis("off")
 
-        # plt.show()
+        plt.show()
 
         wrt.add_figure('activations_img_grid_' + str(j), act_img_fig)
         j += 1
+        

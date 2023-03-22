@@ -15,10 +15,11 @@ from ablation_studies import AblationStudies
 from metrics import dc_loss, jac_loss, custom_loss, binary_jac, binary_acc, binary_prec, binary_rec, binary_f1s
 from plotting_utils import set_default, add_gradient_hist, add_metric_hist, plot_check_results, kernels_viewer, activations_viewer
 
+
 """ Solver for training and testing. """
 class Solver(object):
+    """ Initialize configurations. """
     def __init__(self, train_loader, test_loader, device, writer, args):
-        """ Initialize configurations. """
         self.args = args
         self.model_name = 'ebhi_seg_{}.pth'.format(self.args.model_name)
 
@@ -83,10 +84,10 @@ class Solver(object):
         self.writer.add_graph(self.net, images.to(self.device))
         self.writer.close()
 
-
         set_default() # setting fig-style
 
 
+    """ Helper function used to save the model. """
     def save_model(self):
         # if you want to save the model
         check_path = os.path.join(self.args.checkpoint_path, self.model_name)
@@ -94,6 +95,7 @@ class Solver(object):
         print('\nModel saved!\n')
 
 
+    """ Helper function used to load the model. """
     def load_model(self, device):
         # function to load the model
         check_path = os.path.join(self.args.checkpoint_path, self.model_name)
@@ -102,8 +104,15 @@ class Solver(object):
         print('\nModel loaded!\n')
 
 
+    """ Helper function used to save collected training-statistics. """
+    def save_json(self, file):
+        with open('./statistics/my_dic_train_results_' + self.args.model_name + 
+                  '_' + datetime.datetime.now().strftime('%d%m%Y-%H%M%S') + '.json', 'w') as f:
+            json.dump(file, f)
+
+
     """ Helper function used to binarize a tensor (mask)
-        in order to compute accuracy, precision, recall, f1-score. """
+        in order to compute binary accuracy, precision, recall, f1-score. """
     def binarization_tensor(self, mask, pred):
         transform = T.ToPILImage()
         binary_mask = transform(np.squeeze(mask)).convert('1')
@@ -114,9 +123,10 @@ class Solver(object):
         return maskf, predf
 
 
-    """ Helper function used to train the model with 
-        early stopping implementatinon. """
+    """ Helper function used to train the model with early stopping implementatinon. """
     def train(self):
+        print('\nStarting training...\n')
+
         # keep track of average training and test losses for each epoch
         avg_train_losses = []
         avg_test_losses = []
@@ -251,11 +261,9 @@ class Solver(object):
 
             self.save_model()  # save at the end of each epoch
 
-        # if self.args.pretrained_net == False:
-        #     self.kernel_analisys() # for debugging
-        if self.args.arc_change_net == False:
-            print(f'\nStarting kernel activations analysis!\n')
-            self.activation_analisys()
+        # final analyses (at the end of the training process)
+        self.kernel_analisys()           
+        self.activation_analisys()
 
         self.writer.flush()
         self.writer.close()
@@ -299,8 +307,7 @@ class Solver(object):
 
                 if self.args.bs_test == 1:
                     # function that binarize an image and then convert it to a tensor
-                    maskf, predf = self.binarization_tensor(
-                        test_targets, test_pred)
+                    maskf, predf = self.binarization_tensor(test_targets, test_pred)
 
                     # per class metrics
                     dc_class_test[test_labels].append(1 - test_loss)
@@ -338,59 +345,24 @@ class Solver(object):
 
     """ Helper function used to visualize CNN kernels. """
     def kernel_analisys(self):
+        print('\nPerforming kernel analysis...\n')
 
-        layer_list = [self.net.down_1, self.net.down_2, self.net.down_3,
-                      self.net.down_4, self.net.down_5, self.net.up_conv_1,
-                      self.net.up_conv_2, self.net.up_conv_3,
-                      self.net.up_conv_4, self.net.output]
-
-        kernels_viewer(layer_list, self.net.output, self.writer)
+        kernels_viewer(self.net, self.writer)
 
 
     """ Helper function used to visualize CNN activations. """
     def activation_analisys(self):
-
-        if self.args.pretrained_net == True:
-            layer_list = [self.net.encoder1, self.net.encoder2, self.net.encoder3,
-                          self.net.encoder4, self.net.bottleneck, self.net.decoder4,
-                          self.net.decoder3, self.net.decoder2,
-                          self.net.decoder1, self.net.conv]
-            out_l = self.net.conv
-        else:
-            layer_list = [self.net.down_1, self.net.down_2, self.net.down_3,
-                          self.net.down_4, self.net.down_5, self.net.up_conv_1,
-                          self.net.up_conv_2, self.net.up_conv_3,
-                          self.net.up_conv_4, self.net.output]
-            out_l = self.net.output
+        print(f'\nPerforming kernel activations analysis...\n')
 
         (img, _, _) = next(iter(self.test_loader))
         img = img.to(self.device)
 
-        activations_viewer(layer_list, self.net, self.writer, img, out_l)
-
-    
-    """ Helper function used to start some ablation studies. """
-    def start_ablation_study(self):
-        ablationNn = AblationStudies(self.args, self.model_name, self.train_loader, self.test_loader, 
-                                     self.net, self.criterion, self.device, self.writer)
-        
-        if self.args.global_ablation == True:
-            ablationNn.iterative_pruning_finetuning()
-
-        elif self.args.selective_ablation == True:
-            ablationNn.selective_pruning()
-
-
-    """ Helper function used to save collected training statistics. """
-    def save_json(self, file):
-        with open('./statistics/my_dic_train_results_' + self.args.model_name + 
-                  '_' + datetime.datetime.now().strftime('%d%m%Y-%H%M%S') + '.json', 'w') as f:
-            json.dump(file, f)
+        activations_viewer(self.net, self.writer, img)
 
 
     ############################################## PREVIEW ##################################################
 
-    """
+    """ plot_kernels
     def plot_kernels(self, tensor):
         import matplotlib.pyplot as  plt
         
@@ -415,7 +387,7 @@ class Solver(object):
 
         # plt.subplots_adjust(wspace=0.5, hspace=0.5)
         plt.show()
-
+    """
 
     def get_tensor_distance(self, mod1, mod2):
         p = mod1.weight.view(-1).detach().numpy()
@@ -427,8 +399,8 @@ class Solver(object):
     def weights_distribution_analysis(self):
         print('\nPerforming weights analysis distribution...\n')
 
-        model1_path = './model_save/ebhi_seg_unet_inittest.pth'
-        model2_path = './model_save/ebhi_seg_unet_no_inittest.pth'
+        model1_path = './model_save/' + 'ebhi_seg_{}.pth'.format(self.args.model_name) 
+        model2_path = './model_save/' + self.args.model_name + '_before_training'
 
         self.net1 = UNET(self.args, 3, 1, [int(f) for f in self.args.features])
         self.net1.load_state_dict(torch.load(model1_path, 
@@ -437,11 +409,13 @@ class Solver(object):
         self.net2.load_state_dict(torch.load(model2_path, 
                                              map_location=torch.device(self.device)))
         
+        mod_name_list = []
+        
         for (module_name1, module1), (module_name2, module2) in zip(self.net1.named_modules(), self.net2.named_modules()):
-
             if (isinstance(module1, torch.nn.Conv2d) and ('bias' not in module_name1) 
                 and isinstance(module2, torch.nn.Conv2d) and ('bias' not in module_name2)):  
 
+                """ Plotting weights
                 tensor1 = module1.weight.detach()
                 tensor2 = module2.weight.detach()
 
@@ -462,13 +436,40 @@ class Solver(object):
                 
                 self.plot_kernels(tensor1)
                 self.plot_kernels(tensor2)
-
-                # self.plot_kernels(module2.weight)              
+                """
                 
-                # distance = self.get_tensor_distance(module1, module2)
+                distance = self.get_tensor_distance(module1, module2)
+                mod_name_list.append((module_name1, distance))
 
-                # print(f'Distance between {module_name1} and {module_name2}: {distance:.2f}')
-        """
+                # print(f'Distance between "{module_name1}" and "{module_name2}": {distance:.2f}')
 
 
+        mod_name_list.sort(key=lambda tup: tup[1], reverse=True)
+
+        return mod_name_list
+        
     #########################################################################################################
+
+
+    """ Helper function used to start some ablation studies. """
+    def start_ablation_study(self):
+        print('\nStarting ablation studies...\n')
+        
+        ablationNn = AblationStudies(self.args, self.model_name, self.train_loader, self.test_loader, 
+                                     self.net, self.criterion, self.device, self.writer)
+        
+        mod_name_list = self.weights_distribution_analysis()
+
+        single = True
+
+        if single == True:
+            mod_name_list[:] = mod_name_list[0]
+        
+        if self.args.global_ablation == True:
+            ablationNn.iterative_pruning_finetuning()
+
+        elif self.args.selective_ablation == True:
+            ablationNn.selective_pruning(mod_name_list)
+
+
+    

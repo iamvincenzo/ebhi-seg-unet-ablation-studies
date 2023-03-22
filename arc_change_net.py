@@ -1,6 +1,7 @@
 #######################################################################################################################################
 # https://github.com/aladdinpersson/Machine-Learning-Collection/tree/master/ML/Pytorch/image_segmentation/semantic_segmentation_unet #
 ######################################################################################################################################
+
 import os
 import torch
 import torch.nn as nn
@@ -79,7 +80,6 @@ class UNET(nn.Module):
         super(UNET, self).__init__()
         self.downs = nn.ModuleList()
         self.ups = nn.ModuleList()
-        # self.downs = nn.ModuleList() ???
         self.pool = nn.MaxPool2d(kernel_size=2, stride=2)
 
         self.args = args
@@ -108,9 +108,8 @@ class UNET(nn.Module):
         if self.args.weights_init == True:
             self.initialize_weights()
 
+        # saving the model before the training process
         self.save_initial_weights_distribution()
-
-
 
     def forward(self, x):
         skip_connections = []
@@ -141,7 +140,6 @@ class UNET(nn.Module):
 
         return x
     
-
     def initialize_weights(self):
         print('\nPerforming weights initialization...')
 
@@ -163,9 +161,10 @@ class UNET(nn.Module):
                 nn.init.kaiming_uniform_(m.weight)
                 nn.init.constant_(m.bias, 0)
 
-
     def save_initial_weights_distribution(self):
-        check_path = os.path.join(self.args.checkpoint_path, self.args.model_name + '_before_training')
-        torch.save(self.state_dict(), check_path)
-        print('\nModel saved (before training)!\n')
+        if (not(self.args.global_ablation) and not(self.args.selective_ablation)): #not(self.args.weights_distr_analysis) and ???
+        
+            check_path = os.path.join(self.args.checkpoint_path, self.args.model_name + '_before_training.pth')
+            torch.save(self.state_dict(), check_path)
+            print('\nModel saved (before training)!\n')
 

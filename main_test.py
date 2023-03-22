@@ -13,14 +13,8 @@ from dataloader_utils import get_proportioned_dataset, EBHIDataset
 from plotting_utils import set_default, plot_samples, add_sample_hist, add_metric_hist
 
 
+""" Helper function used to check the validity of some cmd parameters. """
 def check_args_integrity(args, tn_l, te_l):
-    """ This function is used to check the validity of some cmd parameters.
-    Args:
-        args (class 'argparse.Namespace'): cmd parameters
-        tn_l (class 'int'): train-set length
-        te_l (class 'int'): test-set length
-    """
-
     if (args.bs_train < 0):
         print('\nError: bs_train must be positive!')
         os._exit(1)
@@ -50,10 +44,11 @@ def check_args_integrity(args, tn_l, te_l):
         os._exit(1)
 
 
+""" Helper function used to get cmd parameters. """
 def get_args():
     parser = argparse.ArgumentParser()
 
-    # Model-infos
+    # model-infos
     ###################################################################
     parser.add_argument('--run_name', type=str,
                         default="run_0", help='name of current run')
@@ -61,7 +56,7 @@ def get_args():
                         help='name of the model to be saved/loaded')
     ###################################################################
 
-    # Training-parameters (1)
+    # training-parameters (1)
     ###################################################################
     parser.add_argument('--epochs', type=int, default=100,
                         help='number of epochs')
@@ -75,7 +70,7 @@ def get_args():
                         help='print losses every N iteration')
     ###################################################################
 
-    # Training-parameters (2)
+    # training-parameters (2)
     ###################################################################
     parser.add_argument('--random_seed', type=int, default=1,
                         help='random seed used to generate random train and test set')
@@ -92,18 +87,15 @@ def get_args():
                         help='threshold used to manipulate the early stopping epoch tresh')
     ###################################################################
 
-    # Training-parameters (3)
+    # training-parameters (3)
     ###################################################################
     parser.add_argument('--resume_train', action='store_true',
                         help='load the model from checkpoint before training')
     ###################################################################
 
-    # Network-architecture-parameters (1) - normalization
-    ###################################################################
-    # data transformation
-    parser.add_argument('--norm_input', action='store_true',
-                        help='normalize input images')
+    # network-architecture-parameters (1) - normalization: 
     # you can modify network architecture
+    ###################################################################
     parser.add_argument('--use_batch_norm', action='store_true',
                         help='use batch normalization layers in each conv layer of the model')
     parser.add_argument('--use_double_batch_norm', action='store_true',
@@ -116,7 +108,7 @@ def get_args():
                         help='use weights initialization')
     ###################################################################
 
-    # Data-parameters
+    # data-parameters
     ###################################################################
     parser.add_argument('--th', type=int, default=300,
                         help='threshold used to manipulate the dataset-%-split')
@@ -126,20 +118,27 @@ def get_args():
                         default='./model_save', help='path were to save the trained model')
     ###################################################################
 
-    # Model-types
+    # model-types
     ###################################################################
     parser.add_argument('--pretrained_net', action='store_true',
                         help='load pretrained model on BRAIN MRI')
-    # This model architecture can be modified.
+    # this model architecture can be modified.
     # arc_change_net can be used with standard dice_loss/jac_loss or bce_with_logits_loss
     parser.add_argument('--arc_change_net', action='store_true',
                         help='load online model implementation')
-    # num of filters in each convolutional layer (num of channels of the feature-map): so you can modify the network architecture
+    # num of filters in each convolutional layer (num of channels of the feature-map): 
+    # so you can modify the network architecture
     parser.add_argument('--features', nargs='+',
                         help='list of features value', default=[64, 128, 256, 512])
     ###################################################################
 
-    # Data-manipulation 
+    # data transformation
+    ###################################################################
+    parser.add_argument('--norm_input', action='store_true',
+                        help='normalize input images')
+    ###################################################################
+
+    # data-manipulation 
     # (hint: select only one of the options below)
     ###################################################################
     parser.add_argument('--apply_transformations', action='store_true',
@@ -150,7 +149,15 @@ def get_args():
                         help='generates a well balanced train_loader')
     ###################################################################
 
-    # Ablation-Studies
+    """ weights_distr_analysis
+    # network-analysis: useful for the ablation studies phase
+    ###################################################################
+    parser.add_argument('--weights_distr_analysis', action='store_true',
+                        help='starts an ablation study')
+    ###################################################################
+    """
+
+    # ablation-Studies
     ###################################################################
     parser.add_argument('--global_ablation', action='store_true',
                         help='starts an ablation study')
@@ -164,19 +171,10 @@ def get_args():
                         help='number of pruning iteration')
     ###################################################################
 
-    """
-    #################### PREVIW ####################
-    parser.add_argument('--weights_distr_analysis', action='store_true',
-                        help='starts an ablation study')
-    ######################################################
-    """
-
-    
-
-
     return parser.parse_args()
 
 
+""" Main function used to run the experiment/analysis. """
 def main(args):
     # tensorboard specifications
     log_folder = './runs/' + args.run_name + '_' + \
@@ -216,15 +214,26 @@ def main(args):
         image/mask set with augmented images:
             AugmentData generates new images/masks and save them in the
             same directory of the original files. """
-    if args.dataset_aug > 0: # AugmentData(img_files_train, mask_files_train, args) ???
-        AugmentData(img_files_train+img_files_test, mask_files_train+mask_files_test, args)
-        img_files_train, mask_files_train, img_files_test, mask_files_test, w_train_clss, w_test_clss = get_proportioned_dataset(args)
+    if args.dataset_aug > 0:
+        aug = AugmentData(args, img_files_train, mask_files_train)
+        aug_img_files_train, aug_mask_files_train = aug.get_augmented_train_set()
+        print(f'Number of elements in train-set before data-augmentation: {len(img_files_train)}')
+        print(f'Number of augmented images: {len(aug_img_files_train)}\n')
+        img_files_train += aug_img_files_train
+        mask_files_train += aug_mask_files_train
+        print(f'Number of elements in train-set after data-augmentation: {len(img_files_train)}\n')
+        
+        # """ The most common practice is to apply data augmentation only to the training samples. The reason 
+        #     is that we want to increase our model's generalization performance by adding more data and diversifying 
+        #     the training dataset. However, we can also use it during testing. """
+        # AugmentData(img_files_train+img_files_test, mask_files_train+mask_files_test, args)
+        # img_files_train, mask_files_train, img_files_test, mask_files_test, w_train_clss, w_test_clss = get_proportioned_dataset(args)
 
     """ Generates a well balanced train_loader used to train the network. """
     if args.balanced_trainset == True:
-        balance_d = BalanceDataset(args)
+        balance_d = BalanceDataset(args, img_files_train, mask_files_train, w_train_clss)
         train_dataloader, class_weights = balance_d.get_loader()
-        print(f'\nTrain-set balanced loader created!\n')
+        print(f'\nBalanced train-dataloader created!\n')
 
         """ Adding histograms to tensorboard to represent the weight 
         of each class in creating the balanced train_loader. """
@@ -251,13 +260,15 @@ def main(args):
     # manage batches, transform the data, and much more.
     """ Custom dataset to load dataset that comes with additional information (mask):
         Dataset stores the samples and their corresponding labels. """
-    train_dataset = EBHIDataset(img_files_train, mask_files_train, args, train=True)
+    if args.balanced_trainset == False:
+        train_dataset = EBHIDataset(img_files_train, mask_files_train, args, train=True)
     test_dataset = EBHIDataset(img_files_test, mask_files_test, args, train=False)
 
     """ DataLoader wraps an iterable around the Dataset to enable easy access to the samples
         according to a specific batch-size (load the data in memory). """
-    train_dataloader = DataLoader(
-        train_dataset, batch_size=args.bs_train, shuffle=True, num_workers=args.workers)
+    if args.balanced_trainset == False:
+        train_dataloader = DataLoader(
+            train_dataset, batch_size=args.bs_train, shuffle=True, num_workers=args.workers)
     test_dataloader = DataLoader(
         test_dataset, batch_size=args.bs_test, shuffle=True, num_workers=args.workers)
 
@@ -270,7 +281,7 @@ def main(args):
     images, masks, labels = next(iter(train_dataloader)) # images = images.to(device) ??? # masks = masks.to(device) ????
     writer.add_figure('ebhi-seg_samples',
                       plot_samples(images, masks, labels, args))
-    writer.close()
+    writer.close() 
 
     # define solver class
     solver = Solver(train_loader=train_dataloader,
@@ -281,17 +292,17 @@ def main(args):
         
     if args.global_ablation == True or args.selective_ablation == True:
         solver.start_ablation_study()
-    
-    # TRAIN model
     else:
         solver.train()
     
-    """
+    """ weights_distr_analysis
     elif args.weights_distr_analysis == True:
         solver.weights_distribution_analysis()
     """
     
     
+    
+""" Starting the simulation. """ 
 if __name__ == "__main__":
     args = get_args()
     # if folder doesn't exist, then create it
@@ -299,5 +310,5 @@ if __name__ == "__main__":
         os.makedirs(args.checkpoint_path)
     if not os.path.isdir('statistics'):
         os.makedirs('statistics')
-    print(args)
+    print(f'\n{args}')
     main(args)
