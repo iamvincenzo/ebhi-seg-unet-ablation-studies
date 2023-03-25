@@ -27,11 +27,9 @@ class Solver(object):
             model = torch.hub.load('mateuszbuda/brain-segmentation-pytorch', 'unet',
                                    in_channels=3, out_channels=1, init_features=32, pretrained=True)
             print(f'\nPretrained model implementation selected:\n\n {model}')
-
         elif self.args.arc_change_net == True:
             model = UNET(self.args, 3, 1, [int(f) for f in self.args.features])
             print(f'\nOnline model implementation selected:\n\n {model}')
-
         else:
             model = UNet(self.args)
             print(f'\nStandard model implementation selected:\n\n {model}')
@@ -399,8 +397,8 @@ class Solver(object):
     def weights_distribution_analysis(self):
         print('\nPerforming weights analysis distribution...\n')
 
-        model1_path = './model_save/' + 'ebhi_seg_{}.pth'.format(self.args.model_name) 
-        model2_path = './model_save/' + self.args.model_name + '_before_training.pth'
+        model1_path = self.args.checkpoint_path + 'ebhi_seg_{}.pth'.format(self.args.model_name) 
+        model2_path = self.args.checkpoint_path + self.args.model_name + '_before_training.pth'
 
 
         if self.args.pretrained_net == True:
