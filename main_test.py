@@ -149,14 +149,6 @@ def get_args():
                         help='generates a well balanced train_loader')
     ###################################################################
 
-    """ weights_distr_analysis
-    # network-analysis: useful for the ablation studies phase
-    ###################################################################
-    parser.add_argument('--weights_distr_analysis', action='store_true',
-                        help='starts an ablation study')
-    ###################################################################
-    """
-
     # ablation-Studies
     ###################################################################
     parser.add_argument('--global_ablation', action='store_true',
@@ -169,6 +161,10 @@ def get_args():
                         help='linear prune amount')
     parser.add_argument('--num_iterations', type=int, default=10,
                         help='number of pruning iteration')
+    parser.add_argument('--single_mod', action='store_true', default=True,
+                        help='starts an ablation study with only one module')
+    parser.add_argument('--double_mod', action='store_true',
+                        help='starts an ablation study with two modules')
     ###################################################################
 
     return parser.parse_args()
@@ -293,13 +289,7 @@ def main(args):
     if args.global_ablation == True or args.selective_ablation == True:
         solver.start_ablation_study()
     else:
-        solver.train()
-    
-    """ weights_distr_analysis
-    elif args.weights_distr_analysis == True:
-        solver.weights_distribution_analysis()
-    """
-    
+        solver.train()    
     
     
 """ Starting the simulation. """ 

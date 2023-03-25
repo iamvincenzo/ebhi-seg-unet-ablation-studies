@@ -162,8 +162,7 @@ class UNET(nn.Module):
                 nn.init.constant_(m.bias, 0)
 
     def save_initial_weights_distribution(self):
-        if (not(self.args.global_ablation) and not(self.args.selective_ablation)): #not(self.args.weights_distr_analysis) and ???
-        
+        if (not(self.args.global_ablation) and not(self.args.selective_ablation)):        
             check_path = os.path.join(self.args.checkpoint_path, self.args.model_name + '_before_training.pth')
             torch.save(self.state_dict(), check_path)
             print('\nModel saved (before training)!\n')

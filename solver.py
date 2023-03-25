@@ -471,19 +471,15 @@ class Solver(object):
         
         mod_name_list = self.weights_distribution_analysis()
 
-        single = True
-        double = False
 
-
-        if single == True:
+        if self.args.single_mod == True:
             mod_name_list[:] = mod_name_list[0:1]
-
-        if double == True:
+        elif self.args.double_mod == True:
             mod_name_list[:] = mod_name_list[0:2]
         
+
         if self.args.global_ablation == True:
             ablationNn.iterative_pruning_finetuning()
-
         elif self.args.selective_ablation == True:
             ablationNn.selective_pruning(mod_name_list)
 
