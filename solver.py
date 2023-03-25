@@ -397,8 +397,8 @@ class Solver(object):
     def weights_distribution_analysis(self):
         print('\nPerforming weights analysis distribution...\n')
 
-        model1_path = self.args.checkpoint_path + 'ebhi_seg_{}.pth'.format(self.args.model_name) 
-        model2_path = self.args.checkpoint_path + self.args.model_name + '_before_training.pth'
+        model1_path = self.args.checkpoint_path + '/ebhi_seg_{}.pth'.format(self.args.model_name) 
+        model2_path = self.args.checkpoint_path + '/' + self.args.model_name + '_before_training.pth'
 
 
         if self.args.pretrained_net == True:

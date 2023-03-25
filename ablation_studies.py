@@ -325,7 +325,7 @@ class AblationStudies(object):
                 f1s_class_test = list([[], [], [], [], [], []])
 
             test_loop = tqdm(enumerate(self.test_loader),
-                             total=len(self.test_loader), leave=False)
+                             total=len(self.test_loader), leave=True)
 
             for batch_test, (test_images, test_targets, test_labels) in test_loop:
                 test_images = test_images.to(self.device)
