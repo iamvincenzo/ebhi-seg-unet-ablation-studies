@@ -400,12 +400,23 @@ class Solver(object):
         print('\nPerforming weights analysis distribution...\n')
 
         model1_path = './model_save/' + 'ebhi_seg_{}.pth'.format(self.args.model_name) 
-        model2_path = './model_save/' + self.args.model_name + '_before_training'
+        model2_path = './model_save/' + self.args.model_name + '_before_training.pth'
 
-        self.net1 = UNET(self.args, 3, 1, [int(f) for f in self.args.features])
+
+        if self.args.pretrained_net == True:
+            self.net1 = torch.hub.load('mateuszbuda/brain-segmentation-pytorch', 'unet',
+                                       in_channels=3, out_channels=1, init_features=32, pretrained=True)
+            self.net2 = torch.hub.load('mateuszbuda/brain-segmentation-pytorch', 'unet',
+                                       in_channels=3, out_channels=1, init_features=32, pretrained=True)
+        elif self.args.arc_change_net == True:
+            self.net1 = UNET(self.args, 3, 1, [int(f) for f in self.args.features])
+            self.net2 = UNET(self.args, 3, 1, [int(f) for f in self.args.features])
+        else:
+            self.net1 = UNet(self.args)
+            self.net2 = UNet(self.args)
+            
         self.net1.load_state_dict(torch.load(model1_path, 
                                              map_location=torch.device(self.device)))
-        self.net2 = UNET(self.args, 3, 1, [int(f) for f in self.args.features])
         self.net2.load_state_dict(torch.load(model2_path, 
                                              map_location=torch.device(self.device)))
         
@@ -441,7 +452,7 @@ class Solver(object):
                 distance = self.get_tensor_distance(module1, module2)
                 mod_name_list.append((module_name1, distance))
 
-                # print(f'Distance between "{module_name1}" and "{module_name2}": {distance:.2f}')
+                print(f'Distance between "{module_name1}" and "{module_name2}": {distance:.2f}')
 
 
         mod_name_list.sort(key=lambda tup: tup[1], reverse=True)
@@ -461,9 +472,14 @@ class Solver(object):
         mod_name_list = self.weights_distribution_analysis()
 
         single = True
+        double = False
+
 
         if single == True:
-            mod_name_list[:] = mod_name_list[0]
+            mod_name_list[:] = mod_name_list[0:1]
+
+        if double == True:
+            mod_name_list[:] = mod_name_list[0:2]
         
         if self.args.global_ablation == True:
             ablationNn.iterative_pruning_finetuning()

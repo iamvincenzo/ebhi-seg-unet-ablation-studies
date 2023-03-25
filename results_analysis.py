@@ -12,20 +12,29 @@ from glob import glob
 def get_args():
     parser = argparse.ArgumentParser()
 
+    parser.add_argument('--model_name', type=str, default="first_train",
+                        help='name of the model to be saved/loaded')
+    
+
     parser.add_argument('--get_best_net_config', action='store_true', default=True,
                         help='get the best network configuration')
     
+    parser.add_argument('--num_conf_per_it', type=int, default=3,
+                        help='number of json files per run')
+        
+    parser.add_argument('--train_statistics_path', type=str,
+                        default='./statistics', help='path were to get model statistics')
+    
+
     parser.add_argument('--compare_ablation_results', action='store_true',
                         help='compare ablation results')
     
-    parser.add_argument('--statistics_path', type=str,
-                        default='./statistics', help='path were to get model statistics')
+    parser.add_argument('--abl_statistics_path', type=str,
+                        default='./abl_statistics', help='path were to get model statistics')
     
-    parser.add_argument('--num_conf_per_it', type=int, default=3,
-                        help='number of json files per run')
+
     
-    parser.add_argument('--model_name', type=str, default="first_train",
-                        help='name of the model to be saved/loaded')
+    
     
 
     return parser.parse_args()
@@ -41,7 +50,7 @@ def get_files_name(path):
 """ Helper function used to get the best network configuration. """
 def get_best_net_config(args):
     print('\n\nGetting the best network configuration...')
-    path = args.statistics_path + '/*.json'
+    path = args.train_statistics_path + '/*.json'
     files = get_files_name(path)
     files = [f for f in files if 'ablation' not in f]
 

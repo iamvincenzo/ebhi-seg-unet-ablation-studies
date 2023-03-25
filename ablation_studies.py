@@ -22,6 +22,7 @@ from metrics import jac_loss, binary_jac, binary_acc, binary_prec, binary_rec, b
 
 
 class AblationStudies(object):
+    """ Initialize configurations. """
     def __init__(self, args, model_name, train_loader, test_loader, model, criterion, device, writer):
         super(AblationStudies, self).__init__()
         self.args = args
@@ -118,12 +119,26 @@ class AblationStudies(object):
         return self.model
 
 
+    """ Helper function used to save the pruned model
+        and the collected results. """
+    def save_abl_model_results(self):
+        check_path = os.path.join(self.args.checkpoint_path, 'pruned_' + self.model_name)
+            
+        torch.save(self.model.state_dict(), check_path)
+        print('\nModel saved!\n')
+
+        """ Saving some statistics. """
+        with open('./abl_statistics/my_dic_ablation_results_' + self.args.model_name + 
+                  '_' + datetime.datetime.now().strftime('%d%m%Y-%H%M%S') + '.json', 'w') as f:
+            json.dump(self.my_dic_ablation_results, f)
+
+
     """ Helper function used to prune the model. """
     def iterative_pruning_finetuning(self, num_epochs_per_iteration=10, grouped_pruning=False):
 
         for i in range(self.args.num_iterations):
 
-            print('Pruning and Finetuning {}/{}'.format(i + 1, self.args.num_iterations))
+            print('\nPruning and Finetuning {}/{}'.format(i + 1, self.args.num_iterations))
 
             print('\nPruning...')
 
@@ -158,13 +173,13 @@ class AblationStudies(object):
                                               name='weight',
                                               amount=self.args.linear_prune_amount)
                         
-            # test the model
-            self.test()
-
             num_zeros, num_elements, sparsity = self.measure_global_sparsity(weight=True, bias=False,
                                                                              conv2d_use_mask=True, linear_use_mask=False)
             
             print(f'Global Sparsity: {sparsity:.2f}\n')
+
+            # test the model
+            self.test()
 
             """ Fine-tuning
             # print(model.conv1._forward_pre_hooks)
@@ -216,7 +231,8 @@ class AblationStudies(object):
         """
         
         # at the end remove the mask and the original weights
-        self.remove_parameters(self.model)
+        self.remove_parameters()
+        self.save_abl_model_results()
 
 
     """ Helper function used to prune only the modules
@@ -225,9 +241,11 @@ class AblationStudies(object):
 
         for i in range(self.args.num_iterations):
 
-            print('Selective Pruning and Finetuning {}/{}'.format(i + 1, self.args.num_iterations))
+            print('\nSelective Pruning and Finetuning {}/{}'.format(i + 1, self.args.num_iterations))
 
             print('\nStarting pruning...')
+
+            print(f'\non: {mod_name_list}...\n')
 
             for module_name, module in self.model.named_modules():
                 for mod_name in mod_name_list:
@@ -260,21 +278,19 @@ class AblationStudies(object):
                         print(f'\nmod_name: {mod_name}, num_zeros: {module_num_zeros}, num_elements: {module_num_elements}, sparsity: {sparsity}')
 
                         self.my_dic_ablation_results['sparsity-Linear' + mod_name] = str(sparsity)
-
             
-            num_zeros, num_elements, sparsity = self.measure_global_sparsity(weight=True, bias=False,
-                                                                             conv2d_use_mask=True, linear_use_mask=False)
-            
-            print(f'Global Sparsity: {sparsity:.2f}\n')
-            
-            # print some info after
-            self.plot_weights_distribution(mod_name_list)
+            # # Debugging: print some info after to see sparse tensor
+            # self.plot_weights_distribution(mod_name_list)
           
             # test the model
             self.test()
 
             # retrain model + ecc. ecc.
             # to do
+
+        # at the end remove the mask and the original weights
+        self.remove_parameters()
+        self.save_abl_model_results()
 
 
     """ Helper function used to binarize a tensor (mask)
@@ -362,17 +378,14 @@ class AblationStudies(object):
                 self.my_dic_ablation_results['rec_class_test_mean'] = [str(np.average(x)) for x in rec_class_test]
                 self.my_dic_ablation_results['f1s_class_test_mean'] = [str(np.average(x)) for x in f1s_class_test]
 
-            
-            self.model = self.remove_parameters()
-            
-            check_path = os.path.join(self.args.checkpoint_path, 'pruned_' + self.model_name)
-            torch.save(self.model.state_dict(), check_path)
-            print('\nModel saved!\n')
-
-            """ Saving some statistics. """
-            with open('./statistics/my_dic_ablation_results_' + self.args.model_name + 
-                      '_' + datetime.datetime.now().strftime('%d%m%Y-%H%M%S') + '.json', 'w') as f:
-                json.dump(self.my_dic_ablation_results, f)
+            # self.model = self.remove_parameters()
+            # check_path = os.path.join(self.args.checkpoint_path, 'pruned_' + self.model_name)
+            # torch.save(self.model.state_dict(), check_path)
+            # print('\nModel saved!\n')
+            # """ Saving some statistics. """
+            # with open('./statistics/my_dic_ablation_results_' + self.args.model_name + 
+            #           '_' + datetime.datetime.now().strftime('%d%m%Y-%H%M%S') + '.json', 'w') as f:
+            #     json.dump(self.my_dic_ablation_results, f)
 
 
     """ Helper function used to visulize model's performance after pruning."""
@@ -390,23 +403,24 @@ class AblationStudies(object):
                 self.writer.add_figure('ablation_check_results', plot_check_results(
                     img[0], mask, pred[0], label[0], self.args), global_step=len(self.train_loader) + batch)
 
-                fig = plot_check_results(
-                    img[0], mask, pred[0], label[0], self.args)
+                # fig = plot_check_results(
+                #     img[0], mask, pred[0], label[0], self.args)
 
-                plt.show(block=False)
-                plt.pause(4) #(10)
-                plt.close()
+                # plt.show(block=False)
+                # plt.pause(4) #(10)
+                # plt.close()
 
 
+# Debugging
 ###########################################################################################################################
 
     def plot_kernels(self, tensor):
         import matplotlib.pyplot as  plt
         
-        if not tensor.ndim==4:
-            raise Exception("assumes a 4D tensor")
-        if not tensor.shape[-1]==3:
-            raise Exception("last dim needs to be 3 to plot")
+        # if not tensor.ndim==4:
+        #     raise Exception("assumes a 4D tensor")
+        # if not tensor.shape[-1]==3:
+        #     raise Exception("last dim needs to be 3 to plot")
         
         num_cols=tensor.shape[0]
         num_kernels = tensor.shape[0]
@@ -421,15 +435,15 @@ class AblationStudies(object):
             ax1.set_yticklabels([])
 
         # plt.subplots_adjust(wspace=0.5, hspace=0.5)
-        # plt.show()
-        plt.show(block=False)
-        plt.pause(4)
-        plt.close()
+        plt.show()
+        # plt.show(block=False)
+        # plt.pause(4)
+        # plt.close()
 
     def plot_weights_distribution(self, mod_name_list):
         for mod in mod_name_list:
             for module_name, module in self.model.named_modules():
-                if(mod == module_name):
+                if(mod[0] == module_name):
 
                     tensor = module.weight.detach()
 
@@ -448,25 +462,25 @@ class AblationStudies(object):
                     break
         print('\n')
 
+    """ Histogram of weights values
+    def plot_weights_distribution(self, mod_name_list, s):
+        bins = 100
+        for mod in mod_name_list:
+            for module_name, module in self.model.named_modules():
+                if(mod == module_name):              
+                    # if isinstance(module, torch.nn.Conv2d) and ('bias' not in module_name):
+                    w = module.weight.view(-1)
+                    hist = torch.histc(w, bins=bins, min=torch.min(w).item(), max=torch.max(w).item(), out=None)
+                    fig = plt.figure(figsize=(5, 5))
+                    plt.bar(range(bins), hist, align='center', color=['forestgreen'])
+                    plt.xlabel('Bins')
+                    plt.ylabel('Frequency')
+                    title = f'Weights distribution of {module_name} module ' + s
+                    plt.title(title, fontsize=18)
+                    # plt.show()
+                    self.writer.add_figure(title, fig)
+                    break
+        self.writer.close()
+    """
 
-    # def plot_weights_distribution(self, mod_name_list, s):
-    #     bins = 100
-    #     for mod in mod_name_list:
-    #         for module_name, module in self.model.named_modules():
-    #             if(mod == module_name):              
-    #                 # if isinstance(module, torch.nn.Conv2d) and ('bias' not in module_name):
-    #                 w = module.weight.view(-1)
-    #                 hist = torch.histc(w, bins=bins, min=torch.min(w).item(), max=torch.max(w).item(), out=None)
-    #                 fig = plt.figure(figsize=(5, 5))
-    #                 plt.bar(range(bins), hist, align='center', color=['forestgreen'])
-    #                 plt.xlabel('Bins')
-    #                 plt.ylabel('Frequency')
-    #                 title = f'Weights distribution of {module_name} module ' + s
-    #                 plt.title(title, fontsize=18)
-    #                 # plt.show()
-    #                 self.writer.add_figure(title, fig)
-    #                 break
-    #     self.writer.close()
-
-    
 ###########################################################################################################################

@@ -310,5 +310,7 @@ if __name__ == "__main__":
         os.makedirs(args.checkpoint_path)
     if not os.path.isdir('statistics'):
         os.makedirs('statistics')
+    if not os.path.isdir('abl_statistics'):
+        os.makedirs('abl_statistics')
     print(f'\n{args}')
     main(args)
