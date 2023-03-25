@@ -161,7 +161,7 @@ def get_args():
                         help='linear prune amount')
     parser.add_argument('--num_iterations', type=int, default=10,
                         help='number of pruning iteration')
-    parser.add_argument('--single_mod', action='store_true', default=True,
+    parser.add_argument('--single_mod', action='store_true',
                         help='starts an ablation study with only one module')
     parser.add_argument('--double_mod', action='store_true',
                         help='starts an ablation study with two modules')
