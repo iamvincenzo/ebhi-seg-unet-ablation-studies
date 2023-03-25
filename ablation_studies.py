@@ -13,7 +13,6 @@ import datetime
 import numpy as np
 from tqdm import tqdm
 import matplotlib as mpl
-import matplotlib.pyplot as plt
 import torchvision.transforms as T
 import torch.nn.utils.prune as prune
 from plotting_utils import plot_check_results
@@ -378,15 +377,6 @@ class AblationStudies(object):
                 self.my_dic_ablation_results['rec_class_test_mean'] = [str(np.average(x)) for x in rec_class_test]
                 self.my_dic_ablation_results['f1s_class_test_mean'] = [str(np.average(x)) for x in f1s_class_test]
 
-            # self.model = self.remove_parameters()
-            # check_path = os.path.join(self.args.checkpoint_path, 'pruned_' + self.model_name)
-            # torch.save(self.model.state_dict(), check_path)
-            # print('\nModel saved!\n')
-            # """ Saving some statistics. """
-            # with open('./statistics/my_dic_ablation_results_' + self.args.model_name + 
-            #           '_' + datetime.datetime.now().strftime('%d%m%Y-%H%M%S') + '.json', 'w') as f:
-            #     json.dump(self.my_dic_ablation_results, f)
-
 
     """ Helper function used to visulize model's performance after pruning."""
     def check_results(self, batch):
@@ -403,9 +393,7 @@ class AblationStudies(object):
                 self.writer.add_figure('ablation_check_results', plot_check_results(
                     img[0], mask, pred[0], label[0], self.args), global_step=len(self.train_loader) + batch)
 
-                # fig = plot_check_results(
-                #     img[0], mask, pred[0], label[0], self.args)
-
+                # fig = plot_check_results(img[0], mask, pred[0], label[0], self.args)
                 # plt.show(block=False)
                 # plt.pause(4) #(10)
                 # plt.close()
