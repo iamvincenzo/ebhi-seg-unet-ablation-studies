@@ -486,6 +486,10 @@ class Solver(object):
             ablationNn.iterative_pruning_finetuning()
         elif self.args.selective_ablation == True:
             ablationNn.selective_pruning(mod_name_list)
+        elif self.args.all_one_by_one == True:
+            for mod in mod_name_list:
+                ablationNn.selective_pruning([mod])
+
 
 
     

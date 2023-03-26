@@ -149,23 +149,34 @@ def get_args():
                         help='generates a well balanced train_loader')
     ###################################################################
 
-    # ablation-Studies
+
+    # ablation-Studies (1) - type
     ###################################################################
     parser.add_argument('--global_ablation', action='store_true',
                         help='starts an ablation study')
     parser.add_argument('--selective_ablation', action='store_true',
                         help='starts an ablation study')
+    ###################################################################
+
+    # ablation-Studies (2) - 
+    ###################################################################
     parser.add_argument('--conv2d_prune_amount', type=float, default=0.25,
                         help='conv2d prune amount')
     parser.add_argument('--linear_prune_amount', type=float, default=0.2,
                         help='linear prune amount')
     parser.add_argument('--num_iterations', type=int, default=10,
                         help='number of pruning iteration')
+    ###################################################################
+
+    # ablation-Studies (1)
+    ###################################################################
     parser.add_argument('--single_mod', action='store_true',
                         help='starts an ablation study with only one module')
     parser.add_argument('--double_mod', action='store_true',
                         help='starts an ablation study with two modules')
     parser.add_argument('--grouped_pruning', action='store_true',
+                        help='to do')
+    parser.add_argument('--all_one_by_one', action='store_true',
                         help='to do')
     ###################################################################
 
