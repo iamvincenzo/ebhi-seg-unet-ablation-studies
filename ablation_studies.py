@@ -120,16 +120,18 @@ class AblationStudies(object):
 
     """ Helper function used to save the pruned model
         and the collected results. """
-    def save_abl_model_results(self):
-        check_path = os.path.join(self.args.checkpoint_path, 'pruned_' + self.model_name)
-            
-        torch.save(self.model.state_dict(), check_path)
-        print('\nModel saved!\n')
-
+    def save_abl_results(self):
         """ Saving some statistics. """
         with open('./abl_statistics/ablation_results_' + self.args.run_name + 
                   '_' + datetime.datetime.now().strftime('%d%m%Y-%H%M%S') + '.json', 'w') as f:
             json.dump(self.my_dic_ablation_results, f)
+
+
+    """ Helper function used to save the model. """
+    def save_abl_model(self):
+        check_path = os.path.join(self.args.checkpoint_path, 'pruned_' + self.model_name)            
+        torch.save(self.model.state_dict(), check_path)
+        print('\nModel saved!\n')
 
 
     """ Helper function used to prune the model. """
@@ -176,12 +178,13 @@ class AblationStudies(object):
             
             print(f'Global Sparsity: {sparsity:.2f}\n')
 
-            self.my_dic_ablation_results['sparsity-global-' + str(i)] = str(sparsity)
+            self.my_dic_ablation_results['sparsity-global-' + str(i + 1)] = str(sparsity)
 
             # test the model
             self.test()
 
-            self.save_abl_model_results()
+            self.save_abl_results()
+            self.my_dic_ablation_results = {}
 
             """ Fine-tuning
             num_epochs_per_iteration=10, 
@@ -232,10 +235,10 @@ class AblationStudies(object):
 
         return model
         """
-        
+
         # at the end remove the mask and the original weights
         self.remove_parameters()
-        self.save_abl_model_results()
+        self.save_abl_model()
 
 
     """ Helper function used to prune only the modules
@@ -263,7 +266,7 @@ class AblationStudies(object):
 
                         print(f'\nmod_name: {mod_name}, num_zeros: {module_num_zeros}, num_elements: {module_num_elements}, sparsity: {sparsity}')
 
-                        self.my_dic_ablation_results['sparsity-Conv2d-' + mod_name + '-' + str(i)] = str(sparsity)
+                        self.my_dic_ablation_results['sparsity-Conv2d-' + mod_name + '-' + str(i + 1)] = str(sparsity)
 
                     elif mod_name == module_name and isinstance(module, torch.nn.Linear):
                         prune.random_structured(module,
@@ -276,7 +279,7 @@ class AblationStudies(object):
                         
                         print(f'\nmod_name: {mod_name}, num_zeros: {module_num_zeros}, num_elements: {module_num_elements}, sparsity: {sparsity}')
 
-                        self.my_dic_ablation_results['sparsity-Linear' + mod_name + '-' + str(i)] = str(sparsity)
+                        self.my_dic_ablation_results['sparsity-Linear' + mod_name + '-' + str(i + 1)] = str(sparsity)
             
             # # Debugging: print some info after to see sparse tensor
             # self.plot_weights_distribution(mod_name_list)
@@ -284,14 +287,15 @@ class AblationStudies(object):
             # test the model
             self.test()
 
-            self.save_abl_model_results()
+            self.save_abl_results()
+            self.my_dic_ablation_results = {}
 
             # retrain model + ecc. ecc.
             # to do
 
         # at the end remove the mask and the original weights
         self.remove_parameters()
-        self.save_abl_model_results()
+        self.save_abl_model()
 
 
     """ Helper function used to binarize a tensor (mask)
