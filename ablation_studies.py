@@ -122,7 +122,7 @@ class AblationStudies(object):
         and the collected results. """
     def save_abl_results(self):
         """ Saving some statistics. """
-        with open('./abl_statistics/ablation_results_' + self.args.run_name + 
+        with open('./abl_statistics/ablation_results_' + self.args.model_name + "_" + self.args.run_name + 
                   '_' + datetime.datetime.now().strftime('%d%m%Y-%H%M%S') + '.json', 'w') as f:
             json.dump(self.my_dic_ablation_results, f)
 

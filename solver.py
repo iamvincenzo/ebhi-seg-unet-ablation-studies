@@ -454,8 +454,8 @@ class Solver(object):
 
                 print(f'Distance between "{module_name1}" and "{module_name2}": {distance:.2f}')
 
-
-        mod_name_list.sort(key=lambda tup: tup[1], reverse=True)
+        if self.args.single_mod == True or self.args.double_mod == True:
+            mod_name_list.sort(key=lambda tup: tup[1], reverse=True)
 
         mod_list = [t[0] for t in mod_name_list]
 

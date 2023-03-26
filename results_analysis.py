@@ -2,6 +2,7 @@
 # BEST NETWORK-CONFIGURATION SELECTION #
 ########################################
 
+import os
 import json
 import datetime
 import argparse
@@ -40,7 +41,10 @@ def get_args():
                         help='compare ablation results')    
     parser.add_argument('--abl_statistics_path', type=str,
                         default='./abl_statistics', help='path were to get model statistics')
+    parser.add_argument('--save_imgs_path', type=str,
+                        default='./data/abl_results_images/', help='path were to get model statistics')
     ###################################################################
+    
     
     return parser.parse_args()
 
@@ -133,7 +137,7 @@ def compare_ablation_results(args, writer):
     
     path = args.abl_statistics_path + '/*.json'
     files = get_files_name(path)
-    abl_files = [f for f in files if 'ablation' in f and args.model_name in f]
+    abl_files = [f for f in files if 'ablation' in f] #and args.model_name in f]
     train_file = [f for f in files if 'ablation' not in f and args.model_name in f]
 
     my_dict_train = {}
@@ -143,7 +147,9 @@ def compare_ablation_results(args, writer):
     with open(train_file[0]) as f:
         my_dict_train = json.load(f)
 
-
+    j = 1
+    types = ['global_ablation', 'glob_ablation_grouped', 
+            'selective_ablation_single_mod', 'selective_ablation_double_mod', 'all_one_by_one']
     # Ablation collected results
     for file in abl_files:
         with open(file) as f:
@@ -162,10 +168,13 @@ def compare_ablation_results(args, writer):
             print('\nAccuracy differences:')
             """
 
-            metrics = ['acc_class_test_mean', 
-                       'prec_class_test_mean', 
-                       'rec_class_test_mean']
+            metrics = ['acc_class_test_mean'] #, 'prec_class_test_mean', 'rec_class_test_mean']
 
+            exp = ""
+            for t in types:
+                if t in file:
+                    exp = t
+            
             for metric in metrics:
                 l0 = np.array(my_dict_train[metric])
                 l0 = l0.astype(np.float32)
@@ -173,14 +182,33 @@ def compare_ablation_results(args, writer):
                 l1 = l1.astype(np.float32)
                 l2 = np.absolute(l0 - l1)
 
+                title = list(my_dict_abl.keys())[0]
+                val = my_dict_abl[title]
+                title1 = title + " = " + val
+ 
                 ax = bar_plotting(l0, l1, l2, metric)
-                plt.show()
+                plt.title(title1)
+                # plt.show()
+                plt.draw()
+                plt.savefig(args.save_imgs_path + str(j) + '_' + exp + '_' + title + '_bp.png', bbox_inches='tight', dpi=1000)      
+                plt.close()  # close the figure when done         
 
                 ax = area_plotting(l0, l1, l2, metric, False)
-                plt.show()
+                plt.title(title)
+                # plt.show()
+                plt.draw()
+                plt.savefig(args.save_imgs_path + str(j) + '_' + exp + '_' + title + '_ap.png', bbox_inches='tight', dpi=1000)
+                plt.close()  # close the figure when done
 
                 ax = line_plotting(l0, l1, metric)
-                plt.show()
+                plt.title(title)
+                # plt.show()
+                plt.draw()
+                plt.savefig(args.save_imgs_path + str(j) + '_' + exp + '_' + title + '_lp.png', bbox_inches='tight', dpi=1000)
+                plt.close()  # close the figure when done
+
+                j += 1
+
 
         # print('\n')
 
@@ -207,6 +235,8 @@ if __name__ == "__main__":
     # set_default()
     args = get_args()
     print(f'\n{args}')
+    if not os.path.isdir(args.save_imgs_path):
+        os.makedirs(args.save_imgs_path)
     main(args)    
         
     

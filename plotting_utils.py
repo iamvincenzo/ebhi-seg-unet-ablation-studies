@@ -248,7 +248,7 @@ def bar_plotting(l0, l1, l2, metric):
     df = pd.DataFrame({k0: l0, k1: l1, 'drop': l2}, index=index)
 
     cmap = cm.get_cmap('Set2') # Colour map (there are many others)
-    ax = df.plot.bar(rot=0, cmap=cmap, edgecolor='None')
+    ax = df.plot.bar(rot=0, cmap=cmap, edgecolor='None',  figsize=(12, 10))
     
     for p in ax.patches:
         ax.annotate("{:.3f}".format(p.get_height()), (p.get_x() * 1.005, p.get_height() * 1.005))
@@ -271,7 +271,7 @@ def area_plotting(l0, l1, l2, metric, stckd=True, subplts=True):
     df = pd.DataFrame({k0: l0, k1: l1, 'drop': l2}, index=index)
 
     cmap = cm.get_cmap('Set2') # Colour map (there are many others)
-    ax = df.plot.area(stacked=stckd, cmap=cmap, subplots=subplts)
+    ax = df.plot.area(stacked=stckd, cmap=cmap, subplots=subplts, figsize=(12, 10))
 
     return ax
 
@@ -293,11 +293,11 @@ def line_plotting(l0, l1, metric):
     df = pd.DataFrame({k0: l0, k1: l1}, index=index)
 
     cmap = cm.get_cmap('Set2') # Colour map (there are many others)
-    df.plot.line(cmap=cmap, ax=axes[0])
+    df.plot.line(cmap=cmap, ax=axes[0], figsize=(12, 5))
 
     my_array = np.array([l0, l1])
     df = pd.DataFrame(my_array, columns=['Normal', 'Polyp', 'Low-grade IN', 
                                                  'High-grade IN', 'Adenocarcinoma', 'Serrated adenoma'])
-    df.plot.line(cmap=cmap, ax=axes[1])
+    df.plot.line(cmap=cmap, ax=axes[1], figsize=(12, 10))
     
     return fig
