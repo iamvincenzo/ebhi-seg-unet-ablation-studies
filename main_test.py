@@ -165,6 +165,8 @@ def get_args():
                         help='starts an ablation study with only one module')
     parser.add_argument('--double_mod', action='store_true',
                         help='starts an ablation study with two modules')
+    parser.add_argument('--grouped_pruning', action='store_true',
+                        help='to do')
     ###################################################################
 
     return parser.parse_args()

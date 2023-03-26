@@ -133,15 +133,14 @@ class AblationStudies(object):
 
 
     """ Helper function used to prune the model. """
-    def iterative_pruning_finetuning(self, num_epochs_per_iteration=10, grouped_pruning=False):
-
+    def iterative_pruning_finetuning(self, grouped_pruning=False):
         for i in range(self.args.num_iterations):
 
             print('\nPruning and Finetuning {}/{}'.format(i + 1, self.args.num_iterations))
-
             print('\nPruning...')
 
             if grouped_pruning == True:
+                print('\nGrouped...')
                 parameters_to_prune = []
                 for _, module in self.model.named_modules():
                     if isinstance(module, torch.nn.Conv2d):
@@ -185,6 +184,7 @@ class AblationStudies(object):
             self.save_abl_model_results()
 
             """ Fine-tuning
+            num_epochs_per_iteration=10, 
             # print(model.conv1._forward_pre_hooks)
 
             print("\nFine-tuning...")
@@ -241,19 +241,15 @@ class AblationStudies(object):
     """ Helper function used to prune only the modules
         passed as parameters. """
     def selective_pruning(self, mod_name_list=['downs.0.conv.0']):
-
         for i in range(self.args.num_iterations):
 
             print('\nSelective Pruning and Finetuning {}/{}'.format(i + 1, self.args.num_iterations))
-
             print('\nStarting pruning...')
-
             print(f'\non: {mod_name_list}...\n')
 
             for module_name, module in self.model.named_modules():
                 for mod_name in mod_name_list:
                     if mod_name == module_name and isinstance(module, torch.nn.Conv2d):
-
                         """ Prunes tensor corresponding to parameter called name in module by 
                             removing the specified amount of (currently unpruned) channels along 
                             the specified dim selected at random. """

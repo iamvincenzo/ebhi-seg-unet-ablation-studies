@@ -421,8 +421,10 @@ class Solver(object):
         mod_name_list = []
         
         for (module_name1, module1), (module_name2, module2) in zip(self.net1.named_modules(), self.net2.named_modules()):
-            if (isinstance(module1, torch.nn.Conv2d) and ('bias' not in module_name1) 
-                and isinstance(module2, torch.nn.Conv2d) and ('bias' not in module_name2)):  
+            if ((isinstance(module1, torch.nn.Conv2d) and ('bias' not in module_name1) 
+                and isinstance(module2, torch.nn.Conv2d) and ('bias' not in module_name2)) or
+                (isinstance(module1, torch.nn.Linear) and ('bias' not in module_name1) 
+                and isinstance(module2, torch.nn.Linear) and ('bias' not in module_name2))):  
 
                 """ Plotting weights
                 tensor1 = module1.weight.detach()
@@ -455,7 +457,9 @@ class Solver(object):
 
         mod_name_list.sort(key=lambda tup: tup[1], reverse=True)
 
-        return mod_name_list
+        mod_list = [t[0] for t in mod_name_list]
+
+        return mod_list
         
     #########################################################################################################
 
@@ -476,7 +480,9 @@ class Solver(object):
             mod_name_list[:] = mod_name_list[0:2]
         
 
-        if self.args.global_ablation == True:
+        if self.args.global_ablation == True and self.args.grouped_pruning == True:
+            ablationNn.iterative_pruning_finetuning(True)
+        elif self.args.global_ablation == True:
             ablationNn.iterative_pruning_finetuning()
         elif self.args.selective_ablation == True:
             ablationNn.selective_pruning(mod_name_list)
