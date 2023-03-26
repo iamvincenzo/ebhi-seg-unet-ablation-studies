@@ -299,7 +299,8 @@ def main(args):
                     writer=writer,
                     args=args)
         
-    if args.global_ablation == True or args.selective_ablation == True:
+    if (args.global_ablation == True or args.selective_ablation == True or
+        args.all_one_by_one == True):
         solver.start_ablation_study()
     else:
         solver.train()    

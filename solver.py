@@ -39,7 +39,7 @@ class Solver(object):
 
         # load a pretrained model
         if (self.args.resume_train == True or self.args.global_ablation == True 
-            or self.args.selective_ablation == True):
+            or self.args.selective_ablation == True or self.args.all_one_by_one == True):
             self.load_model(device)
 
         # define Loss function
