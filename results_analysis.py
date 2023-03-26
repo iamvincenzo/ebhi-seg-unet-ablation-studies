@@ -3,40 +3,45 @@
 ########################################
 
 import json
+import datetime
 import argparse
 import numpy as np
 from glob import glob
+import matplotlib.pyplot as plt
+from torch.utils.tensorboard import SummaryWriter
+from plotting_utils import bar_plotting, area_plotting, line_plotting #, set_default
 
 
 """ Helper function used to get cmd parameters. """
 def get_args():
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('--model_name', type=str, default="first_train",
+    # model-infos
+    ###################################################################
+    parser.add_argument('--model_name', type=str, default="unet_final_2t",
                         help='name of the model to be saved/loaded')
-    
+    parser.add_argument('--result_analysis_name', type=str, default="unet_final_2t_abl_results",
+                        help='to do ???')
+    ###################################################################
 
-    parser.add_argument('--get_best_net_config', action='store_true', default=True,
+    # best-configuration
+    ###################################################################
+    parser.add_argument('--get_best_net_config', action='store_true', # default=True,
                         help='get the best network configuration')
-    
     parser.add_argument('--num_conf_per_it', type=int, default=3,
                         help='number of json files per run')
-        
     parser.add_argument('--train_statistics_path', type=str,
                         default='./statistics', help='path were to get model statistics')
-    
-
-    parser.add_argument('--compare_ablation_results', action='store_true',
-                        help='compare ablation results')
-    
+    ###################################################################
+        
+    # ablation
+    ###################################################################
+    parser.add_argument('--compare_ablation_results', action='store_true', default=True,
+                        help='compare ablation results')    
     parser.add_argument('--abl_statistics_path', type=str,
                         default='./abl_statistics', help='path were to get model statistics')
+    ###################################################################
     
-
-    
-    
-    
-
     return parser.parse_args()
 
 
@@ -122,9 +127,11 @@ def get_best_net_config(args):
     return mean_test_losses, mean_test_accs, mean_test_precs, mean_test_recs
 
 
-def compare_ablation_results(args):
+""" Helper function used to ??? """
+def compare_ablation_results(args, writer):
     print('\n\nGetting ablation studies statistics results...\n')
-    path = args.statistics_path + '/*.json'
+    
+    path = args.abl_statistics_path + '/*.json'
     files = get_files_name(path)
     abl_files = [f for f in files if 'ablation' in f and args.model_name in f]
     train_file = [f for f in files if 'ablation' not in f and args.model_name in f]
@@ -132,47 +139,55 @@ def compare_ablation_results(args):
     my_dict_train = {}
     my_dict_abl = {}
 
+    # Training collected results
     with open(train_file[0]) as f:
         my_dict_train = json.load(f)
 
+
+    # Ablation collected results
     for file in abl_files:
         with open(file) as f:
             my_dict_abl = json.load(f)
 
+            """ Statistics calculation
             print('Test-losses differences:')
-
             # if my_dict_abl_loss < my_dict_train_loss --> diff < 0 (good)
             # if my_dict_abl_loss > my_dict_train_loss --> diff > 0 (not good)
             # my_dict_abl_loss == my_dict_train_loss --> diff == 0 
             diff = float(my_dict_abl['avg_test_losses']) - float(my_dict_train['avg_test_losses'][-1])
-            
             var1 = float(my_dict_train['avg_test_losses'][-1])
             var2 = float(my_dict_abl['avg_test_losses'])
-
             print(f'my_dict_abl: {var2:.4f}, my_dict_train: {var1:.4f}, abs_diff: {diff}')
-
+            
             print('\nAccuracy differences:')
+            """
 
-            # statistics calculation: accuracy
-            l0 = np.array(my_dict_abl['prec_class_test_mean'])
-            l0 = l0.astype(np.float32)
+            metrics = ['acc_class_test_mean', 
+                       'prec_class_test_mean', 
+                       'rec_class_test_mean']
 
-            l1 = np.array(my_dict_train['acc_class_test_mean'])
-            l1 = l1.astype(np.float32)
-           
-            print(f'abl: {l0}')
+            for metric in metrics:
+                l0 = np.array(my_dict_train[metric])
+                l0 = l0.astype(np.float32)
+                l1 = np.array(my_dict_abl[metric])
+                l1 = l1.astype(np.float32)
+                l2 = np.absolute(l0 - l1)
 
-            print(f'train: {l1}')
+                ax = bar_plotting(l0, l1, l2, metric)
+                plt.show()
 
-            print(f'abl - train: {np.subtract(l0, l1)}\n')
+                ax = area_plotting(l0, l1, l2, metric, False)
+                plt.show()
 
-        print('\n')
+                ax = line_plotting(l0, l1, metric)
+                plt.show()
+
+        # print('\n')
 
 
 def main(args):
     if args.get_best_net_config == True:
         mean_test_losses, mean_test_accs, mean_test_precs, mean_test_recs = get_best_net_config(args)
-
         for idx, val in enumerate(mean_test_losses):
             print(f'\n{idx+1}) Configuration: {val[0]}, \n \
                 mean-test-loss: {val[1]:.4f}, mean-train-loss: {val[2]:.4f}, abs-diff: {np.abs(val[1] - val[2]):.4f} \n \
@@ -181,17 +196,18 @@ def main(args):
                 mean-test per-class-recall: {mean_test_recs[val[3]]}, total: {np.mean(mean_test_recs[val[3]]):.4f}\n')
     
     elif args.compare_ablation_results == True:
-        compare_ablation_results(args)
+         # tensorboard specifications
+        log_folder = './runs/' + args.result_analysis_name + '_' + \
+            datetime.datetime.now().strftime('%d%m%Y-%H%M%S')
+        writer = SummaryWriter(log_folder)
+        compare_ablation_results(args, writer)
 
 
 if __name__ == "__main__":
+    # set_default()
     args = get_args()
     print(f'\n{args}')
-    main(args)
-
-
-
-    
+    main(args)    
         
     
 """ The selection of the best configuration is based on:

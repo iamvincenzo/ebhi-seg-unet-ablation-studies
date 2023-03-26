@@ -177,8 +177,12 @@ class AblationStudies(object):
             
             print(f'Global Sparsity: {sparsity:.2f}\n')
 
+            self.my_dic_ablation_results['sparsity-global-' + str(i)] = str(sparsity)
+
             # test the model
             self.test()
+
+            self.save_abl_model_results()
 
             """ Fine-tuning
             # print(model.conv1._forward_pre_hooks)
@@ -263,7 +267,7 @@ class AblationStudies(object):
 
                         print(f'\nmod_name: {mod_name}, num_zeros: {module_num_zeros}, num_elements: {module_num_elements}, sparsity: {sparsity}')
 
-                        self.my_dic_ablation_results['sparsity-Conv2d-' + mod_name] = str(sparsity)
+                        self.my_dic_ablation_results['sparsity-Conv2d-' + mod_name + '-' + str(i)] = str(sparsity)
 
                     elif mod_name == module_name and isinstance(module, torch.nn.Linear):
                         prune.random_structured(module,
@@ -276,13 +280,15 @@ class AblationStudies(object):
                         
                         print(f'\nmod_name: {mod_name}, num_zeros: {module_num_zeros}, num_elements: {module_num_elements}, sparsity: {sparsity}')
 
-                        self.my_dic_ablation_results['sparsity-Linear' + mod_name] = str(sparsity)
+                        self.my_dic_ablation_results['sparsity-Linear' + mod_name + '-' + str(i)] = str(sparsity)
             
             # # Debugging: print some info after to see sparse tensor
             # self.plot_weights_distribution(mod_name_list)
           
             # test the model
             self.test()
+
+            self.save_abl_model_results()
 
             # retrain model + ecc. ecc.
             # to do

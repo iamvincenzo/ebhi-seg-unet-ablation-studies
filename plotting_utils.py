@@ -1,5 +1,7 @@
 import torch
 import numpy as np
+import pandas as pd
+from matplotlib import cm
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 from dataloader_utils import class_dic
@@ -230,3 +232,72 @@ def activations_viewer(net, wrt, img):
         wrt.add_figure('activations_img_grid_' + str(j), act_img_fig)
         j += 1
         
+
+""" Helper function used to plot some metrics. """
+def bar_plotting(l0, l1, l2, metric):
+    index = ['Normal', 'Polyp', 'Low-grade IN', 
+             'High-grade IN', 'Adenocarcinoma', 'Serrated adenoma']
+    
+    if metric == 'acc_class_test_mean':
+        k0, k1 = 'train_acc', 'abl_acc'
+    elif metric == 'prec_class_test_mean':
+        k0, k1 = 'train_prec', 'abl_prec'
+    elif metric == 'rec_class_test_mean':
+        k0, k1 = 'train_rec', 'abl_rec'
+
+    df = pd.DataFrame({k0: l0, k1: l1, 'drop': l2}, index=index)
+
+    cmap = cm.get_cmap('Set2') # Colour map (there are many others)
+    ax = df.plot.bar(rot=0, cmap=cmap, edgecolor='None')
+    
+    for p in ax.patches:
+        ax.annotate("{:.3f}".format(p.get_height()), (p.get_x() * 1.005, p.get_height() * 1.005))
+
+    return ax
+
+
+""" Helper function. """
+def area_plotting(l0, l1, l2, metric, stckd=True, subplts=True):
+    index = ['Normal', 'Polyp', 'Low-grade IN', 
+             'High-grade IN', 'Adenocarcinoma', 'Serrated adenoma']
+    
+    if metric == 'acc_class_test_mean':
+        k0, k1 = 'train_acc', 'abl_acc'
+    elif metric == 'prec_class_test_mean':
+        k0, k1 = 'train_prec', 'abl_prec'
+    elif metric == 'rec_class_test_mean':
+        k0, k1 = 'train_rec', 'abl_rec'
+
+    df = pd.DataFrame({k0: l0, k1: l1, 'drop': l2}, index=index)
+
+    cmap = cm.get_cmap('Set2') # Colour map (there are many others)
+    ax = df.plot.area(stacked=stckd, cmap=cmap, subplots=subplts)
+
+    return ax
+
+
+""" Helper function. """
+def line_plotting(l0, l1, metric):
+    index = ['Normal', 'Polyp', 'Low-grade IN', 
+             'High-grade IN', 'Adenocarcinoma', 'Serrated adenoma']
+    
+    fig, axes = plt.subplots(2, 1)
+
+    if metric == 'acc_class_test_mean':
+        k0, k1 = 'train_acc', 'abl_acc'
+    elif metric == 'prec_class_test_mean':
+        k0, k1 = 'train_prec', 'abl_prec'
+    elif metric == 'rec_class_test_mean':
+        k0, k1 = 'train_rec', 'abl_rec'
+
+    df = pd.DataFrame({k0: l0, k1: l1}, index=index)
+
+    cmap = cm.get_cmap('Set2') # Colour map (there are many others)
+    df.plot.line(cmap=cmap, ax=axes[0])
+
+    my_array = np.array([l0, l1])
+    df = pd.DataFrame(my_array, columns=['Normal', 'Polyp', 'Low-grade IN', 
+                                                 'High-grade IN', 'Adenocarcinoma', 'Serrated adenoma'])
+    df.plot.line(cmap=cmap, ax=axes[1])
+    
+    return fig
