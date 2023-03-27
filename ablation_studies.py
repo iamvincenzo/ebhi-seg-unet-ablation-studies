@@ -34,6 +34,8 @@ class AblationStudies(object):
         self.device = device
         self.writer = writer
 
+        self.t = datetime.datetime.now().strftime('%d%m%Y-%H%M%S')
+
         mpl.rcParams.update(mpl.rcParamsDefault)
         self.my_dic_ablation_results = {}
 
@@ -182,7 +184,7 @@ class AblationStudies(object):
             self.my_dic_ablation_results['sparsity-global-' + str(i + 1)] = str(sparsity)
 
             # test the model
-            self.test()
+            self.test(i)
 
             self.save_abl_results()
             self.my_dic_ablation_results = {}
@@ -257,10 +259,15 @@ class AblationStudies(object):
                         """ Prunes tensor corresponding to parameter called name in module by 
                             removing the specified amount of (currently unpruned) channels along 
                             the specified dim selected at random. """
-                        prune.random_structured(module,
-                                                name='weight',
-                                                amount=self.args.conv2d_prune_amount,
-                                                dim=0) # along batch
+                        if self.args.random_structured == True:
+                            prune.random_structured(module,
+                                                    name='weight',
+                                                    amount=self.args.conv2d_prune_amount,
+                                                    dim=0) # along batch
+                        elif self.args.random_unstructured == True:
+                            prune.random_unstructured(module, 
+                                                    name='weight',
+                                                    amount=self.args.conv2d_prune_amount)
                                                                         
                         module_num_zeros, module_num_elements, sparsity = self.measure_module_sparsity(
                             module, weight=True, bias=False, use_mask=True)
@@ -270,10 +277,15 @@ class AblationStudies(object):
                         self.my_dic_ablation_results['sparsity-Conv2d-' + mod_name + '-' + str(i + 1)] = str(sparsity)
 
                     elif mod_name == module_name and isinstance(module, torch.nn.Linear):
-                        prune.random_structured(module,
-                                                name='weight',
-                                                amount=self.args.linear_prune_amount,
-                                                dim=0) # along batch
+                        if self.args.random_structured == True:
+                            prune.random_structured(module,
+                                                    name='weight',
+                                                    amount=self.args.linear_prune_amount,
+                                                    dim=0) # along batch
+                        elif self.args.random_unstructured == True:
+                            prune.random_unstructured(module, 
+                                                    name='weight',
+                                                    amount=self.args.linear_prune_amount)
 
                         module_num_zeros, module_num_elements, sparsity = self.measure_module_sparsity(
                             module, weight=True, bias=False, use_mask=True)
@@ -286,7 +298,7 @@ class AblationStudies(object):
             # self.plot_weights_distribution(mod_name_list)
           
             # test the model
-            self.test()
+            self.test(i)
 
             self.save_abl_results()
             self.my_dic_ablation_results = {}
@@ -312,7 +324,7 @@ class AblationStudies(object):
 
 
     """ Helper function used to test model's performance after pruning. """
-    def test(self):
+    def test(self, itr):
         print(f'\nPerforming validation-test after pruning...\n')
 
         test_losses = []
@@ -344,7 +356,7 @@ class AblationStudies(object):
                 test_losses.append(test_loss)
 
                 # used to check model improvement
-                self.check_results(batch_test)
+                self.check_results(batch_test, itr)
 
                 if self.args.bs_test == 1:
                     # function that binarize an image and then convert it to a tensor
@@ -386,7 +398,7 @@ class AblationStudies(object):
 
 
     """ Helper function used to visulize model's performance after pruning."""
-    def check_results(self, batch):
+    def check_results(self, batch, itr):
         with torch.no_grad():
             if batch % 50 == 49:
                 self.model.eval()
@@ -397,8 +409,9 @@ class AblationStudies(object):
                 mask = mask[0]
                 pred = self.model(img)
 
-                self.writer.add_figure('ablation_check_results', plot_check_results(
-                    img[0], mask, pred[0], label[0], self.args), global_step=len(self.train_loader) + batch)
+                self.writer.add_figure('ablation_check_results_' + self.t + '_' + str(itr), 
+                                       plot_check_results(img[0], mask, pred[0], label[0], self.args), 
+                                       global_step=len(self.train_loader) + batch)
 
                 # fig = plot_check_results(img[0], mask, pred[0], label[0], self.args)
                 # plt.show(block=False)
@@ -441,7 +454,7 @@ class AblationStudies(object):
     def plot_weights_distribution(self, mod_name_list):
         for mod in mod_name_list:
             for module_name, module in self.model.named_modules():
-                if(mod[0] == module_name):
+                if(mod == module_name):
 
                     tensor = module.weight.detach()
 
@@ -480,7 +493,6 @@ class AblationStudies(object):
         self.writer.close()
 
 ###########################################################################################################################
-
 
 
 # Useful (in future)

@@ -42,6 +42,9 @@ def check_args_integrity(args, tn_l, te_l):
     if (args.dataset_aug < 0):
         print('\nError: dataset_aug must be positive!')
         os._exit(1)
+    if (args.random_structured == True and args.random_unstructured == True):
+        print('\nError: only one between random_structured and random_unstructured!')
+        os._exit(1)
 
 
 """ Helper function used to get cmd parameters. """
@@ -150,15 +153,29 @@ def get_args():
     ###################################################################
 
 
-    # ablation-Studies (1) - type
+    # ablation-Studies (1) - types
     ###################################################################
     parser.add_argument('--global_ablation', action='store_true',
                         help='starts an ablation study')
+    parser.add_argument('--grouped_pruning', action='store_true',
+                        help='to do')
+    ###################################################################
+    parser.add_argument('--all_one_by_one', action='store_true',
+                        help='to do')
+    ###################################################################
     parser.add_argument('--selective_ablation', action='store_true',
+                        help='starts an ablation study')
+    parser.add_argument('--single_mod', action='store_true',
+                        help='starts an ablation study with only one module')
+    parser.add_argument('--double_mod', action='store_true',
+                        help='starts an ablation study with two modules')
+    parser.add_argument('--random_structured', action='store_true',
+                        help='starts an ablation study c')
+    parser.add_argument('--random_unstructured', action='store_true',
                         help='starts an ablation study')
     ###################################################################
 
-    # ablation-Studies (2) - 
+    # ablation-Studies (2) - parameters
     ###################################################################
     parser.add_argument('--conv2d_prune_amount', type=float, default=0.25,
                         help='conv2d prune amount')
@@ -168,17 +185,6 @@ def get_args():
                         help='number of pruning iteration')
     ###################################################################
 
-    # ablation-Studies (1)
-    ###################################################################
-    parser.add_argument('--single_mod', action='store_true',
-                        help='starts an ablation study with only one module')
-    parser.add_argument('--double_mod', action='store_true',
-                        help='starts an ablation study with two modules')
-    parser.add_argument('--grouped_pruning', action='store_true',
-                        help='to do')
-    parser.add_argument('--all_one_by_one', action='store_true',
-                        help='to do')
-    ###################################################################
 
     return parser.parse_args()
 
