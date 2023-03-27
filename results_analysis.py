@@ -147,29 +147,78 @@ def compare_ablation_results(args, writer):
     with open(train_file[0]) as f:
         my_dict_train = json.load(f)
 
+    metrics = ['acc_class_test_mean'] #, 'prec_class_test_mean', 'rec_class_test_mean']
+
+    # ('file-name', 'op-name', drop, accuracy)
+    drops_max_per_class = [('h', 'h', 0, 0), ('h', 'h', 0, 0), ('h', 'h', 0, 0), 
+                           ('h', 'h', 0, 0), ('h', 'h', 0, 0), ('h', 'h', 0, 0)]
+    
+    drop_max_per = 'acc_class_test_mean' # metric used fo selection
+
     j = 1
-    types = ['global_ablation', 'glob_ablation_grouped', 
-            'selective_ablation_single_mod', 'selective_ablation_double_mod', 'all_one_by_one']
-    # Ablation collected results
+    types = ['global_ablation', 'glob_ablation_grouped', 'a_o_b_o',
+             'selective_ablation_single_mod', 'selective_ablation_double_mod', 'all_one_by_one']
+    
+    # Computing drop-max in accuracy per class
     for file in abl_files:
         with open(file) as f:
             my_dict_abl = json.load(f)
 
-            """ Statistics calculation
-            print('Test-losses differences:')
-            # if my_dict_abl_loss < my_dict_train_loss --> diff < 0 (good)
-            # if my_dict_abl_loss > my_dict_train_loss --> diff > 0 (not good)
-            # my_dict_abl_loss == my_dict_train_loss --> diff == 0 
-            diff = float(my_dict_abl['avg_test_losses']) - float(my_dict_train['avg_test_losses'][-1])
-            var1 = float(my_dict_train['avg_test_losses'][-1])
-            var2 = float(my_dict_abl['avg_test_losses'])
-            print(f'my_dict_abl: {var2:.4f}, my_dict_train: {var1:.4f}, abs_diff: {diff}')
+            exp = ""
+            for t in types:
+                if t in file:
+                    exp = t
+
+            for metric in metrics:
+                l0 = np.array(my_dict_train[metric])
+                l0 = l0.astype(np.float32)
+                l1 = np.array(my_dict_abl[metric])
+                l1 = l1.astype(np.float32)
+                l2 = np.absolute(l0 - l1)
+
+                title = list(my_dict_abl.keys())[0]
+                val = my_dict_abl[title]
+                title1 = title + " = " + val
+
+                # Computing drop-max per class (accuracy)
+                if metric == drop_max_per:
+                    for i in range(len(drops_max_per_class)):
+                        if drops_max_per_class[i][2] < l2[i]:
+                            drops_max_per_class[i] = (file, title, l2[i], l1[i])
+
+                ax = bar_plotting(l0, l1, l2, metric)
+                plt.title(title1)
+                # plt.show()
+                plt.draw()
+                plt.savefig(args.save_imgs_path + str(j) + '_' + exp + '_' + title + '_bp.png', bbox_inches='tight', dpi=1000)      
+                plt.close()  # close the figure when done         
+
+                ax = area_plotting(l0, l1, l2, metric, False)
+                plt.title(title1)
+                # plt.show()
+                plt.draw()
+                plt.savefig(args.save_imgs_path + str(j) + '_' + exp + '_' + title + '_ap.png', bbox_inches='tight', dpi=1000)
+                plt.close()  # close the figure when done
+
+                # ax = line_plotting(l0, l1, metric)
+                # plt.title(title1)
+                # # plt.show()
+                # plt.draw()
+                # plt.savefig(args.save_imgs_path + str(j) + '_' + exp + '_' + title + '_lp.png', bbox_inches='tight', dpi=1000)
+                # plt.close()  # close the figure when done
+
+                j += 1
+    
+    for _, drp in enumerate(drops_max_per_class):
+        print(drp)
+    
+
+    """ print some graphs 
+    # Computing graphs for each drop-max in accuracy per class
+    for (file, _, _, _) in drops_max_per_class:
+        with open(file) as f:
+            my_dict_abl = json.load(f)
             
-            print('\nAccuracy differences:')
-            """
-
-            metrics = ['acc_class_test_mean'] #, 'prec_class_test_mean', 'rec_class_test_mean']
-
             exp = ""
             for t in types:
                 if t in file:
@@ -185,7 +234,7 @@ def compare_ablation_results(args, writer):
                 title = list(my_dict_abl.keys())[0]
                 val = my_dict_abl[title]
                 title1 = title + " = " + val
- 
+
                 ax = bar_plotting(l0, l1, l2, metric)
                 plt.title(title1)
                 # plt.show()
@@ -200,17 +249,15 @@ def compare_ablation_results(args, writer):
                 plt.savefig(args.save_imgs_path + str(j) + '_' + exp + '_' + title + '_ap.png', bbox_inches='tight', dpi=1000)
                 plt.close()  # close the figure when done
 
-                ax = line_plotting(l0, l1, metric)
-                plt.title(title1)
-                # plt.show()
-                plt.draw()
-                plt.savefig(args.save_imgs_path + str(j) + '_' + exp + '_' + title + '_lp.png', bbox_inches='tight', dpi=1000)
-                plt.close()  # close the figure when done
+                # ax = line_plotting(l0, l1, metric)
+                # plt.title(title1)
+                # # plt.show()
+                # plt.draw()
+                # plt.savefig(args.save_imgs_path + str(j) + '_' + exp + '_' + title + '_lp.png', bbox_inches='tight', dpi=1000)
+                # plt.close()  # close the figure when done
 
-                j += 1
-
-
-        # print('\n')
+                j += 1           
+    """
 
 
 def main(args):
