@@ -387,13 +387,28 @@ class Solver(object):
         plt.show()
     """
 
+
+    """ Same as quantify_change_nn_parameters
     def get_tensor_distance(self, mod1, mod2):
         p = mod1.weight.view(-1).detach().numpy()
         q = mod2.weight.view(-1).detach().numpy()
         
         return np.sqrt(np.sum(np.square(p - q)))
+    """
 
 
+    """ Helper function. """
+    def quantify_change_nn_parameters(self, tensor1, tensor2):
+        # Calcolare la differenza tra i due tensori
+        diff = tensor2 - tensor1
+
+        # Calcolare la norma L2 della differenza
+        norm = torch.norm(diff, p=2)
+
+        return norm
+
+
+    """ Helper function. """
     def weights_distribution_analysis(self):
         print('\nPerforming weights analysis distribution...\n')
 
@@ -449,7 +464,9 @@ class Solver(object):
                 self.plot_kernels(tensor2)
                 """
                 
-                distance = self.get_tensor_distance(module1, module2)
+                # distance = self.get_tensor_distance(module1, module2)
+                distance = self.quantify_change_nn_parameters(module1.weight.detach(), 
+                                                              module2.weight.detach())
                 mod_name_list.append((module_name1, distance))
 
                 print(f'Distance between "{module_name1}" and "{module_name2}": {distance:.2f}')
@@ -461,13 +478,14 @@ class Solver(object):
 
         return mod_list
         
+
     #########################################################################################################
 
 
     """ Helper function used to start some ablation studies. """
     def start_ablation_study(self):
         print('\nStarting ablation studies...\n')
-        
+
         ablationNn = AblationStudies(self.args, self.model_name, self.train_loader, self.test_loader, 
                                      self.net, self.criterion, self.device, self.writer)
         
@@ -494,7 +512,4 @@ class Solver(object):
                 self.load_model(self.device)
                 ablationNn = AblationStudies(self.args, self.model_name, self.train_loader, self.test_loader, 
                                              self.net, self.criterion, self.device, self.writer)
-                
-
-
     
