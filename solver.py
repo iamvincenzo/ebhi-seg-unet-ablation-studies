@@ -358,36 +358,6 @@ class Solver(object):
         activations_viewer(self.net, self.writer, img)
 
 
-    ############################################## PREVIEW ##################################################
-
-    """ plot_kernels
-    def plot_kernels(self, tensor):
-        import matplotlib.pyplot as  plt
-        
-        if not tensor.ndim==4:
-            raise Exception("assumes a 4D tensor")
-        if not tensor.shape[-1]==3:
-            raise Exception("last dim needs to be 3 to plot")
-        
-        num_cols=tensor.shape[0]
-        num_kernels = tensor.shape[0]
-        num_rows = 1 #+ num_kernels // num_cols
-
-        print(num_cols, num_kernels, num_rows)
-
-        fig = plt.figure(figsize=(num_cols, num_rows))
-        for i in range(tensor.shape[0]):
-            ax1 = fig.add_subplot(num_rows,num_cols,i+1)
-            ax1.imshow(tensor[i])
-            ax1.axis('off')
-            ax1.set_xticklabels([])
-            ax1.set_yticklabels([])
-
-        # plt.subplots_adjust(wspace=0.5, hspace=0.5)
-        plt.show()
-    """
-
-
     """ Same as quantify_change_nn_parameters
     def get_tensor_distance(self, mod1, mod2):
         p = mod1.weight.view(-1).detach().numpy()
@@ -479,18 +449,13 @@ class Solver(object):
         return mod_list
         
 
-
-
-    #########################################################################################################
-
-
     """ Helper function used to start some ablation studies. """
     def start_ablation_study(self):
         print('\nStarting ablation studies...\n')
 
         ablationNn = AblationStudies(self.args, self.model_name, self.train_loader, self.test_loader, 
                                      self.net, self.criterion, self.device, self.writer)
-             
+        
         # select the first or first two tensors with major-changing
         mod_name_list = self.weights_distribution_analysis()
 

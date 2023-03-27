@@ -13,6 +13,7 @@ import datetime
 import numpy as np
 from tqdm import tqdm
 import matplotlib as mpl
+import matplotlib.pyplot as plt
 import torchvision.transforms as T
 import torch.nn.utils.prune as prune
 from plotting_utils import plot_check_results
@@ -405,9 +406,10 @@ class AblationStudies(object):
                 # plt.close()
 
 
-# Debugging
+# Debugging-functions
 ###########################################################################################################################
 
+    """ Helper function. """
     def plot_kernels(self, tensor):
         import matplotlib.pyplot as  plt
         
@@ -434,6 +436,8 @@ class AblationStudies(object):
         # plt.pause(4)
         # plt.close()
 
+
+    """ Helper function. """
     def plot_weights_distribution(self, mod_name_list):
         for mod in mod_name_list:
             for module_name, module in self.model.named_modules():
@@ -456,32 +460,33 @@ class AblationStudies(object):
                     break
         print('\n')
 
-    """ Histogram of weights values
-    def plot_weights_distribution(self, mod_name_list, s):
+
+    """ Histogram of weights values. """
+    def plot_weights_distribution_histo(self):
         bins = 100
-        for mod in mod_name_list:
-            for module_name, module in self.model.named_modules():
-                if(mod == module_name):              
-                    # if isinstance(module, torch.nn.Conv2d) and ('bias' not in module_name):
-                    w = module.weight.view(-1)
-                    hist = torch.histc(w, bins=bins, min=torch.min(w).item(), max=torch.max(w).item(), out=None)
-                    fig = plt.figure(figsize=(5, 5))
-                    plt.bar(range(bins), hist, align='center', color=['forestgreen'])
-                    plt.xlabel('Bins')
-                    plt.ylabel('Frequency')
-                    title = f'Weights distribution of {module_name} module ' + s
-                    plt.title(title, fontsize=18)
-                    # plt.show()
-                    self.writer.add_figure(title, fig)
-                    break
+        for module_name, module in self.model.named_modules():
+            if isinstance(module, torch.nn.Conv2d) and ('bias' not in module_name):
+                w = module.weight.detach().view(-1)
+                hist = torch.histc(w, bins=bins, min=torch.min(w).item(), max=torch.max(w).item(), out=None)
+                fig = plt.figure(figsize=(5, 5))
+                plt.bar(range(bins), hist, align='center', color=['forestgreen'])
+                plt.xlabel('Bins')
+                plt.ylabel('Frequency')
+                title = f'Weights distribution of {module_name} module '
+                plt.title(title, fontsize=18)
+                # plt.show()
+                self.writer.add_figure(title, fig)
+
         self.writer.close()
-    """
 
 ###########################################################################################################################
 
 
 
-    # ????
+# Useful (in future)
+###########################################################################################################################
+
+    """ Helper function used to remove modules from model 
     def remove_modules(self, mod_name='downs.0.conv.2'):
 
         tmp = self.model.downs[0] 
@@ -492,3 +497,4 @@ class AblationStudies(object):
 
         
         print(self.model)
+    """
