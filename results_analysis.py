@@ -180,7 +180,7 @@ def compare_ablation_results(args, writer):
                 val = my_dict_abl[title]
                 title1 = title + " = " + val
 
-                # Computing drop-max per class (accuracy)
+                # computing drop-max (worst) per class (accuracy)
                 if metric == drop_max_per:
                     for i in range(len(drops_max_per_class)):
                         if drops_max_per_class[i][2] < l2[i]:
@@ -193,6 +193,7 @@ def compare_ablation_results(args, writer):
                 plt.savefig(args.save_imgs_path + str(j) + '_' + exp + '_' + title + '_bp.png', bbox_inches='tight', dpi=1000)      
                 plt.close()  # close the figure when done         
 
+                """ other graphs: (area, line)
                 ax = area_plotting(l0, l1, l2, metric, False)
                 plt.title(title1)
                 # plt.show()
@@ -200,12 +201,13 @@ def compare_ablation_results(args, writer):
                 plt.savefig(args.save_imgs_path + str(j) + '_' + exp + '_' + title + '_ap.png', bbox_inches='tight', dpi=1000)
                 plt.close()  # close the figure when done
 
-                # ax = line_plotting(l0, l1, metric)
-                # plt.title(title1)
-                # # plt.show()
-                # plt.draw()
-                # plt.savefig(args.save_imgs_path + str(j) + '_' + exp + '_' + title + '_lp.png', bbox_inches='tight', dpi=1000)
-                # plt.close()  # close the figure when done
+                ax = line_plotting(l0, l1, metric)
+                plt.title(title1)
+                # plt.show()
+                plt.draw()
+                plt.savefig(args.save_imgs_path + str(j) + '_' + exp + '_' + title + '_lp.png', bbox_inches='tight', dpi=1000)
+                plt.close()  # close the figure when done
+                """
 
                 j += 1
     
@@ -213,7 +215,7 @@ def compare_ablation_results(args, writer):
         print(drp)
     
 
-    """ print some graphs 
+    """ print (graphs) only the worst 
     # Computing graphs for each drop-max in accuracy per class
     for (file, _, _, _) in drops_max_per_class:
         with open(file) as f:
