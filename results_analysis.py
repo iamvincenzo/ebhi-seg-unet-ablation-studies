@@ -194,14 +194,14 @@ def compare_ablation_results(args, writer):
                 plt.close()  # close the figure when done         
 
                 ax = area_plotting(l0, l1, l2, metric, False)
-                plt.title(title)
+                plt.title(title1)
                 # plt.show()
                 plt.draw()
                 plt.savefig(args.save_imgs_path + str(j) + '_' + exp + '_' + title + '_ap.png', bbox_inches='tight', dpi=1000)
                 plt.close()  # close the figure when done
 
                 ax = line_plotting(l0, l1, metric)
-                plt.title(title)
+                plt.title(title1)
                 # plt.show()
                 plt.draw()
                 plt.savefig(args.save_imgs_path + str(j) + '_' + exp + '_' + title + '_lp.png', bbox_inches='tight', dpi=1000)
