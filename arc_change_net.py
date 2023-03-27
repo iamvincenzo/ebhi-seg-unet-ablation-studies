@@ -167,4 +167,3 @@ class UNET(nn.Module):
             check_path = os.path.join(self.args.checkpoint_path, self.args.model_name + '_before_training.pth')
             torch.save(self.state_dict(), check_path)
             print('\nModel saved (before training)!\n')
-

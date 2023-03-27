@@ -478,3 +478,17 @@ class AblationStudies(object):
     """
 
 ###########################################################################################################################
+
+
+
+    # ????
+    def remove_modules(self, mod_name='downs.0.conv.2'):
+
+        tmp = self.model.downs[0] 
+
+        del self.model.downs[0] #.conv[0]
+
+        self.model.downs[1].conv[0]
+
+        
+        print(self.model)

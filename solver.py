@@ -488,7 +488,7 @@ class Solver(object):
 
         ablationNn = AblationStudies(self.args, self.model_name, self.train_loader, self.test_loader, 
                                      self.net, self.criterion, self.device, self.writer)
-        
+             
         # select the first or first two tensors with major-changing
         mod_name_list = self.weights_distribution_analysis()
 
@@ -512,4 +512,5 @@ class Solver(object):
                 self.load_model(self.device)
                 ablationNn = AblationStudies(self.args, self.model_name, self.train_loader, self.test_loader, 
                                              self.net, self.criterion, self.device, self.writer)
+                
     
