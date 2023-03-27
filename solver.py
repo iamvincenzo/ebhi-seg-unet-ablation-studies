@@ -471,8 +471,8 @@ class Solver(object):
         ablationNn = AblationStudies(self.args, self.model_name, self.train_loader, self.test_loader, 
                                      self.net, self.criterion, self.device, self.writer)
         
+        # select the first or first two tensors with major-changing
         mod_name_list = self.weights_distribution_analysis()
-
 
         if self.args.single_mod == True:
             mod_name_list[:] = mod_name_list[0:1]
@@ -490,6 +490,11 @@ class Solver(object):
             for mod in mod_name_list:
                 ablationNn.selective_pruning([mod])
 
+                # re-loading model after each unit-ablation study (network passed as reference)
+                self.load_model(self.device)
+                ablationNn = AblationStudies(self.args, self.model_name, self.train_loader, self.test_loader, 
+                                             self.net, self.criterion, self.device, self.writer)
+                
 
 
     
