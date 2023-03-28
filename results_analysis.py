@@ -4,7 +4,6 @@
 
 import os
 import json
-import datetime
 import argparse
 import numpy as np
 from glob import glob
