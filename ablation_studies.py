@@ -294,8 +294,9 @@ class AblationStudies(object):
 
                         self.my_dic_ablation_results['sparsity-Linear' + mod_name + '-' + str(i + 1)] = str(sparsity)
             
-            # # Debugging: print some info after to see sparse tensor
-            # self.plot_weights_distribution(mod_name_list)
+            # Debugging: print some info after to see sparse tensor
+            if self.args.plt_weights_distr == True:
+                self.plot_weights_distribution(mod_name_list)
           
             # test the model
             self.test(i)
@@ -444,10 +445,10 @@ class AblationStudies(object):
             ax1.set_yticklabels([])
 
         # plt.subplots_adjust(wspace=0.5, hspace=0.5)
-        plt.show()
-        # plt.show(block=False)
-        # plt.pause(4)
-        # plt.close()
+        # plt.show()
+        plt.show(block=False)
+        plt.pause(5)
+        plt.close()
 
 
     """ Helper function. """
@@ -473,29 +474,10 @@ class AblationStudies(object):
                     break
         print('\n')
 
-
-    """ Histogram of weights values. """
-    def plot_weights_distribution_histo(self):
-        bins = 100
-        for module_name, module in self.model.named_modules():
-            if isinstance(module, torch.nn.Conv2d) and ('bias' not in module_name):
-                w = module.weight.detach().view(-1)
-                hist = torch.histc(w, bins=bins, min=torch.min(w).item(), max=torch.max(w).item(), out=None)
-                fig = plt.figure(figsize=(5, 5))
-                plt.bar(range(bins), hist, align='center', color=['forestgreen'])
-                plt.xlabel('Bins')
-                plt.ylabel('Frequency')
-                title = f'Weights distribution of {module_name} module '
-                plt.title(title, fontsize=18)
-                # plt.show()
-                self.writer.add_figure(title, fig)
-
-        self.writer.close()
-
 ###########################################################################################################################
 
 
-# Useful (in future)
+# Useful (maybe in future)
 ###########################################################################################################################
 
     """ Helper function used to remove modules from model 

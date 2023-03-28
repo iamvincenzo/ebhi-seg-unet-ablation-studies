@@ -185,6 +185,14 @@ def get_args():
                         help='number of pruning iteration')
     ###################################################################
 
+     # weights-analysis 
+    ###################################################################
+    parser.add_argument('--weights_distr_histo', action='store_true',
+                        help='starts an ablation study')
+    parser.add_argument('--plt_weights_distr', action='store_true',
+                        help='starts an ablation study')
+    ###################################################################
+
 
     return parser.parse_args()
 
@@ -305,9 +313,12 @@ def main(args):
                     writer=writer,
                     args=args)
         
-    if (args.global_ablation == True or args.selective_ablation == True or
+    if (args.global_ablation == True or 
+        args.selective_ablation == True or
         args.all_one_by_one == True):
         solver.start_ablation_study()
+    elif args.weights_distr_histo == True:
+        solver.weights_distribution_analysis()
     else:
         solver.train()    
     

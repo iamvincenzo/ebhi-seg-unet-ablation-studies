@@ -13,7 +13,7 @@ from model import UNet
 from arc_change_net import UNET
 from ablation_studies import AblationStudies
 from metrics import dc_loss, jac_loss, custom_loss, binary_jac, binary_acc, binary_prec, binary_rec, binary_f1s
-from plotting_utils import set_default, add_gradient_hist, add_metric_hist, plot_check_results, kernels_viewer, activations_viewer
+from plotting_utils import set_default, add_gradient_hist, add_metric_hist, plot_check_results, kernels_viewer, activations_viewer, plot_weights_distribution_histo
 
 
 """ Solver for training and testing. """
@@ -367,7 +367,9 @@ class Solver(object):
     """
 
 
-    """ Helper function. """
+    """ Helper function used to quantify the difference between the weights of a 
+        neural network before and after training by subtracting the weight tensors 
+        of the network before and after training and then computing the L2 norm. """
     def quantify_change_nn_parameters(self, tensor1, tensor2):
         # Calcolare la differenza tra i due tensori
         diff = tensor2 - tensor1
@@ -378,13 +380,17 @@ class Solver(object):
         return norm
 
 
-    """ Helper function. """
-    def weights_distribution_analysis(self):
-        print('\nPerforming weights analysis distribution...\n')
+    """ Helper function used to run the comparison between 
+        weights of the model before and after training. """
+    def weights_pre_after_train_analysis(self):
+        print('\nPerforming weights analysis pre-training vs. after training to quantify neural network parameter changes...\n')
 
         model1_path = self.args.checkpoint_path + '/ebhi_seg_{}.pth'.format(self.args.model_name) 
         model2_path = self.args.checkpoint_path + '/' + self.args.model_name + '_before_training.pth'
 
+        # there is no need to initialize the weights because the 
+        # models that are to be loaded do not need to be trained
+        self.args.weights_init = False
 
         if self.args.pretrained_net == True:
             self.net1 = torch.hub.load('mateuszbuda/brain-segmentation-pytorch', 'unet',
@@ -457,7 +463,7 @@ class Solver(object):
                                      self.net, self.criterion, self.device, self.writer)
         
         # select the first or first two tensors with major-changing
-        mod_name_list = self.weights_distribution_analysis()
+        mod_name_list = self.weights_pre_after_train_analysis()
 
         if self.args.single_mod == True:
             mod_name_list[:] = mod_name_list[0:1]
@@ -480,4 +486,9 @@ class Solver(object):
                 ablationNn = AblationStudies(self.args, self.model_name, self.train_loader, self.test_loader, 
                                              self.net, self.criterion, self.device, self.writer)
                 
-                
+
+    """ Helper function used to plot the weights 
+        distribution using histograms. """
+    def weights_distribution_analysis(self):
+        print('\nPerforming weights analysis distribution...\n')
+        plot_weights_distribution_histo(self.net, self.writer)
