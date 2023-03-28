@@ -156,7 +156,7 @@ def compare_ablation_results(args, writer):
     drop_max_per = 'acc_class_test_mean' # metric used fo selection
 
     j = 1
-    types = ['global_ablation', 'glob_ablation_grouped', 'a_o_b_o',
+    types = ['global_ablation', 'glob_ablation_grouped', 'a_o_b_o', 'al_ol_bl_ol',
              'selective_ablation_single_mod', 'selective_ablation_double_mod', 'all_one_by_one']
     
     # Computing drop-max in accuracy per class
@@ -193,7 +193,7 @@ def compare_ablation_results(args, writer):
                 plt.savefig(args.save_imgs_path + str(j) + '_' + exp + '_' + title + '_bp.png', bbox_inches='tight', dpi=1000)      
                 plt.close()  # close the figure when done         
 
-                """ other graphs: (area, line)
+                
                 ax = area_plotting(l0, l1, l2, metric, False)
                 plt.title(title1)
                 # plt.show()
@@ -201,6 +201,7 @@ def compare_ablation_results(args, writer):
                 plt.savefig(args.save_imgs_path + str(j) + '_' + exp + '_' + title + '_ap.png', bbox_inches='tight', dpi=1000)
                 plt.close()  # close the figure when done
 
+                """
                 ax = line_plotting(l0, l1, metric)
                 plt.title(title1)
                 # plt.show()
