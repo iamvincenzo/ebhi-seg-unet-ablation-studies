@@ -9,8 +9,8 @@ import argparse
 import numpy as np
 from glob import glob
 import matplotlib.pyplot as plt
-from torch.utils.tensorboard import SummaryWriter
-from plotting_utils import bar_plotting, area_plotting, line_plotting #, set_default
+from plotting_utils import bar_plotting, area_plotting
+# , line_plotting, set_default
 
 
 """ Helper function used to get cmd parameters. """
@@ -21,8 +21,6 @@ def get_args():
     ###################################################################
     parser.add_argument('--model_name', type=str, default="unet_final_2t",
                         help='name of the model to be saved/loaded')
-    parser.add_argument('--result_analysis_name', type=str, default="unet_final_2t_abl_results",
-                        help='to do ???')
     ###################################################################
 
     # best-configuration
@@ -132,7 +130,7 @@ def get_best_net_config(args):
 
 
 """ Helper function used to ??? """
-def compare_ablation_results(args, writer):
+def compare_ablation_results(args):
     print('\n\nGetting ablation studies statistics results...\n')
     
     path = args.abl_statistics_path + '/*.json'
@@ -263,6 +261,7 @@ def compare_ablation_results(args, writer):
     """
 
 
+""" Helper function used to run the simulation. """
 def main(args):
     if args.get_best_net_config == True:
         mean_test_losses, mean_test_accs, mean_test_precs, mean_test_recs = get_best_net_config(args)
@@ -274,11 +273,7 @@ def main(args):
                 mean-test per-class-recall: {mean_test_recs[val[3]]}, total: {np.mean(mean_test_recs[val[3]]):.4f}\n')
     
     elif args.compare_ablation_results == True:
-         # tensorboard specifications
-        log_folder = './runs/' + args.result_analysis_name + '_' + \
-            datetime.datetime.now().strftime('%d%m%Y-%H%M%S')
-        writer = SummaryWriter(log_folder)
-        compare_ablation_results(args, writer)
+        compare_ablation_results(args)
 
 
 if __name__ == "__main__":
@@ -287,32 +282,4 @@ if __name__ == "__main__":
     print(f'\n{args}')
     if not os.path.isdir(args.save_imgs_path):
         os.makedirs(args.save_imgs_path)
-    main(args)    
-        
-    
-""" The selection of the best configuration is based on:
-        - mean-test-loss;
-        - difference in absolute value between mean-test-loss and mean-train-loss;
-        - mean-accuracy, mean-precision, mean-recall.
-        
-    Output of the top-three best-configurations:
-
-        >  1) Configuration: unet_3_0_2t,
-              mean-test-loss: 0.0536, mean-train-loss: 0.0408, abs-diff: 0.0128 
-              mean-test per-class-accuracy: [0.9623189  0.96565896 0.9605729  0.9154892  0.89932853 0.9408622 ], total: 0.9407 
-              mean-test per-class-precision: [0.96945447 0.9783523  0.97588116 0.9515314  0.93830997 0.9434865 ], total: 0.9595 
-              mean-test per-class-recall: [0.9676378  0.9580894  0.96404046 0.9274319  0.91293246 0.9604456 ], total: 0.9484
-
-        >  2) Configuration: unet_13_0_2t, 
-              mean-test-loss: 0.0560, mean-train-loss: 0.0466, abs-diff: 0.0095 
-              mean-test per-class-accuracy: [0.9597576  0.9654646  0.95879984 0.90839267 0.8935342  0.9448583 ], total: 0.9385 
-              mean-test per-class-precision: [0.9671772  0.9744418  0.974854   0.9533973  0.9409496  0.95258427], total: 0.9606 
-              mean-test per-class-recall: [0.96462065 0.96160406 0.9628343  0.9156433  0.9021184  0.95946884], total: 0.9444
-
-        >  3) Configuration: unet_4_0_2t, 
-              mean-test-loss: 0.0576, mean-train-loss: 0.0526, abs-diff: 0.0050 
-              mean-test per-class-accuracy: [0.9571473  0.96196645 0.95727676 0.9050472  0.89431095 0.92810273], total: 0.9340
-              mean-test per-class-precision: [0.9668333 0.9768634 0.9731913 0.9419367 0.9312933 0.9322795], total: 0.9537
-              mean-test per-class-recall: [0.9624381  0.9533414  0.9623093  0.92224884 0.91217774 0.95272416], total: 0.9442
-    
-    The selected best-configuration is the 2nd. """
+    main(args)
