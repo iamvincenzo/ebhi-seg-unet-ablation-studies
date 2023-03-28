@@ -233,6 +233,24 @@ def activations_viewer(net, wrt, img):
         j += 1
         
 
+""" Histogram of weights values. """
+def plot_weights_distribution_histo(model, writer, bins = 100):
+    for module_name, module in model.named_modules():
+        if isinstance(module, torch.nn.Conv2d) and ('bias' not in module_name):
+            w = module.weight.detach().view(-1)
+            hist = torch.histc(w, bins=bins, min=torch.min(w).item(), max=torch.max(w).item(), out=None)
+            fig = plt.figure(figsize=(5, 5))
+            plt.bar(range(bins), hist, align='center', color=['forestgreen'])
+            plt.xlabel('Bins')
+            plt.ylabel('Frequency')
+            title = f'Weights distribution of {module_name} module '
+            plt.title(title, fontsize=18)
+            plt.show()
+            writer.add_figure(title, fig)
+
+    writer.close()
+
+
 """ Helper function used to plot some metrics. """
 def bar_plotting(l0, l1, l2, metric):
     index = ['Normal', 'Polyp', 'Low-grade IN', 

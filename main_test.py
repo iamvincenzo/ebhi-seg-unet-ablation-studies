@@ -45,7 +45,24 @@ def check_args_integrity(args, tn_l, te_l):
     if (args.random_structured == True and args.random_unstructured == True):
         print('\nError: only one between random_structured and random_unstructured!')
         os._exit(1)
-
+    if (args.single_mod == True and args.double_mod == True):
+        print('\nError: choose only one between "single_mod" and "double_mod"!')
+        os._exit(1)
+    if ((args.selective_ablation == True and args.random_structured == False) and 
+        (args.selective_ablation == True and args.random_unstructured == False)):        
+            print('\nError: at least one of "random_structured" or "random_unstructured" has to' + 
+                  'be selected with "selective_ablation"!')
+            os._exit(1)
+    if ((args.all_one_by_one == True and args.random_structured == False) and 
+        (args.all_one_by_one == True and args.random_unstructured == False)):        
+            print('\nError: at least one of "random_structured" or "random_unstructured" has to' + 
+                  'be selected with "all_one_by_one"!')
+            os._exit(1)
+    if ((args.all_one_by_one == True and args.single_mod == True) or 
+        (args.all_one_by_one == True and args.double_mod == True)):        
+            print('\nError: you can\'t select "all_one_by_one" with "single_mod"/"double_mod"!')
+            os._exit(1)
+    
 
 """ Helper function used to get cmd parameters. """
 def get_args():
