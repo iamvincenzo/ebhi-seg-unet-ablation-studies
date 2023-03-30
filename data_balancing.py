@@ -46,6 +46,7 @@ class BalanceDataset():
 
         print(f'Class-weights: {class_weights}')
 
+        # initialize a list with "len(train_dataset)" zeros [0, ..., 0] 
         sample_weights = [0] * len(train_dataset)
 
         for idx, (_, _, label) in enumerate(train_dataset):
