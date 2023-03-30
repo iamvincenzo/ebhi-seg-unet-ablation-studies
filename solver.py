@@ -257,7 +257,8 @@ class Solver(object):
             if earlystopping:
                 break
 
-            self.save_model()  # save at the end of each epoch
+            # save at the end of each epoch only if earlystopping = False
+            self.save_model()  
 
         # final analyses (at the end of the training process)
         self.kernel_analisys()           
