@@ -473,11 +473,14 @@ class Solver(object):
         
 
         if self.args.global_ablation == True and self.args.grouped_pruning == True:
-            ablationNn.iterative_pruning_finetuning(True)
+            ablationNn.iterative_pruning(True)
+
         elif self.args.global_ablation == True:
-            ablationNn.iterative_pruning_finetuning()
+            ablationNn.iterative_pruning()
+
         elif self.args.selective_ablation == True:
             ablationNn.selective_pruning(mod_name_list)
+            
         elif self.args.all_one_by_one == True:
             for mod in mod_name_list:
                 ablationNn.selective_pruning([mod])

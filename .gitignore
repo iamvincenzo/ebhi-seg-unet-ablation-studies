@@ -152,6 +152,8 @@ abl_statistics/
 
 abl_statistics_/
 
+altro/
+
 *.ipynb
 
 *.bat

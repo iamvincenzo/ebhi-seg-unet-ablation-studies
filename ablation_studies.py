@@ -138,10 +138,10 @@ class AblationStudies(object):
 
 
     """ Helper function used to prune the model. """
-    def iterative_pruning_finetuning(self, grouped_pruning=False):
+    def iterative_pruning(self, grouped_pruning=False):
         for i in range(self.args.num_iterations):
 
-            print('\nPruning and Finetuning {}/{}'.format(i + 1, self.args.num_iterations))
+            print('\nPruning {}/{}'.format(i + 1, self.args.num_iterations))
             print('\nPruning...')
 
             if grouped_pruning == True:
@@ -189,56 +189,6 @@ class AblationStudies(object):
             self.save_abl_results()
             self.my_dic_ablation_results = {}
 
-            """ Fine-tuning
-            num_epochs_per_iteration=10, 
-            # print(model.conv1._forward_pre_hooks)
-
-            print("\nFine-tuning...")
-
-            # retrain model
-
-            train_model(model=model,
-                        train_loader=train_loader,
-                        test_loader=test_loader,
-                        device=device,
-                        l1_regularization_strength=l1_regularization_strength,
-                        l2_regularization_strength=l2_regularization_strength,
-                        learning_rate=learning_rate * (learning_rate_decay**i),
-                        num_epochs=num_epochs_per_iteration)
-
-            _, eval_accuracy = evaluate_model(model=model,
-                                            test_loader=test_loader,
-                                            device=device,
-                                            criterion=None)
-
-            classification_report = create_classification_report(
-                model=model, test_loader=test_loader, device=device)
-
-            num_zeros, num_elements, sparsity = measure_global_sparsity(
-                model,
-                weight=True,
-                bias=False,
-                conv2d_use_mask=True,
-                linear_use_mask=False)
-
-            print("Test Accuracy: {:.3f}".format(eval_accuracy))
-            print("Classification Report:")
-            print(classification_report)
-            print("Global Sparsity:")
-            print("{:.2f}".format(sparsity))
-
-            model_filename = "{}_{}.pt".format(model_filename_prefix, i + 1)
-            model_filepath = os.path.join(model_dir, model_filename)
-            save_model(model=model,
-                    model_dir=model_dir,
-                    model_filename=model_filename)
-            model = load_model(model=model,
-                            model_filepath=model_filepath,
-                            device=device)
-
-        return model
-        """
-
         # at the end remove the mask and the original weights
         self.remove_parameters()
         self.save_abl_model()
@@ -249,7 +199,7 @@ class AblationStudies(object):
     def selective_pruning(self, mod_name_list=['downs.0.conv.0']):
         for i in range(self.args.num_iterations):
 
-            print('\nSelective Pruning and Finetuning {}/{}'.format(i + 1, self.args.num_iterations))
+            print('\nSelective Pruning {}/{}'.format(i + 1, self.args.num_iterations))
             print('\nStarting pruning...')
             print(f'\non: {mod_name_list}...\n')
 
@@ -475,20 +425,3 @@ class AblationStudies(object):
         print('\n')
 
 ###########################################################################################################################
-
-
-# Useful (maybe in future)
-###########################################################################################################################
-
-    """ Helper function used to remove modules from model 
-    def remove_modules(self, mod_name='downs.0.conv.2'):
-
-        tmp = self.model.downs[0] 
-
-        del self.model.downs[0] #.conv[0]
-
-        self.model.downs[1].conv[0]
-
-        
-        print(self.model)
-    """
