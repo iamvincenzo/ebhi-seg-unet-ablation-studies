@@ -17,6 +17,7 @@ def diff(l1, l2):
 def clean_dataset(args):
     classes = ['Normal', 'Polyp', 'Low-grade IN',
                'High-grade IN', 'Adenocarcinoma', 'Serrated adenoma']
+    
     diffs = []
 
     print(f'\nPerforming dataset cleaning...\n')
@@ -37,7 +38,6 @@ def clean_dataset(args):
     # debugging
     print(f'\nDifferences between image-label directories: {diffs}\n')
     
-
     # removing images without label(seg-mask) or mask without images
     removing_files = []
     for t in diffs:
