@@ -6,10 +6,11 @@ from torch.utils.data import WeightedRandomSampler, DataLoader
 from dataloader_utils import get_proportioned_dataset, EBHIDataset
 
 
-""" Custom class that uses 'WeightedRandomSampler' to sample 
+""" Custom class that uses WeightedRandomSampler to sample 
     from dataset such that the model sees approximately each
     class the same number of times. """
 class BalanceDataset():
+    """ Initialize configurations. """
     def __init__(self, args, img_files_train, mask_files_train, w_train_clss):
         super(BalanceDataset, self).__init__()
         self.args = args
@@ -17,7 +18,7 @@ class BalanceDataset():
         self.mask_files_train = mask_files_train
         self.w_train_clss = w_train_clss
 
-    """ This method is used to generates a well balanced 
+    """ Method used to generates a well balanced 
         trainloader: the pairs (image, mask) selected 
         for training are equal in number for the 
         various classes. """
@@ -34,8 +35,7 @@ class BalanceDataset():
         # forcing dataset creation to apply transformation if not applied with data-augmentation
         if self.args.dataset_aug == 0:
             self.args.apply_transformations = True
-        train_dataset = EBHIDataset(
-            self.img_files_train, self.mask_files_train, self.args, train=True)
+        train_dataset = EBHIDataset(self.img_files_train, self.mask_files_train, self.args, train=True)
 
         """ As the number of elements per class increases, the weight of 
             the class decreases, therefore the sampler considers more the 
@@ -56,8 +56,7 @@ class BalanceDataset():
         """ It is possible for a given sample to be included more than once (replacement=True).
             Weights is a sequence of weights, not necessary summing up to one. num_samples is
             the number of samples to draw. """
-        sampler = WeightedRandomSampler(
-            sample_weights, num_samples=len(sample_weights), replacement=True)
+        sampler = WeightedRandomSampler(sample_weights, num_samples=len(sample_weights), replacement=True)
 
         train_dataloader = DataLoader(train_dataset, batch_size=self.args.bs_train,
                                       num_workers=self.args.workers, sampler=sampler)
@@ -65,7 +64,7 @@ class BalanceDataset():
         return train_dataloader, class_weights
 
 
-""" Example of use 
+""" Example of use: 
 import torch
 import argparse
 from tqdm import tqdm

@@ -9,15 +9,19 @@ import albumentations as A
     (ii) save them in order to augment data available 
     for training and testing (augment the entire dataset).  """
 class AugmentData():
+    """ Initialize configurations. """
     def __init__(self, args, image_paths, mask_paths):
         super(AugmentData, self).__init__()
         self.args = args
-        self.image_paths = image_paths  # all the image paths of the train-set
-        self.mask_paths = mask_paths  # all the corresponding mask paths
-        self.augmentation()  # invoke the method
+        self.image_paths = image_paths 
+        self.mask_paths = mask_paths
+        # invoke the method
+        self.augmentation()  
 
+    """ Method used to augment image data. """
     def augmentation(self):
-        transform = A.Compose( # some transformation applied to images and relative masks
+        # some transformation applied to images and relative masks
+        transform = A.Compose( 
             [
                 A.Rotate(limit=40, p=0.9, border_mode=cv2.BORDER_CONSTANT),
                 A.HorizontalFlip(p=0.5),
@@ -54,6 +58,7 @@ class AugmentData():
                 im = Image.fromarray(augmented_mask)
                 im.save(sub_path_msk + '_aug_' + str(i + 1) + '_.png')
 
+    """ Method used to return paths of augmented images and masks. """
     def get_augmented_train_set(self):
         mask_files_train_aug_list = [fn for fn in glob(self.args.dataset_path + '*/label/*') if 'aug' in fn]
         img_files_train_aug_list = []
