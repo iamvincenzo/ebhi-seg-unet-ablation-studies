@@ -1,7 +1,7 @@
 import torch
 from torchmetrics.classification import BinaryAccuracy, BinaryJaccardIndex, BinaryPrecision, BinaryRecall, BinaryF1Score
 
-""" Dice loss function """
+""" Dice loss function. """
 def dc_loss(pred, target):
     smooth = 1.
 
@@ -12,7 +12,7 @@ def dc_loss(pred, target):
     return 1 - ((2. * intersection + smooth) /
                 (predf.sum() + targetf.sum() + smooth))
 
-""" IoU loss (Jaccard loss) """
+""" IoU loss (Jaccard loss). """
 def jac_loss(pred, target):
     smooth = 1.
 
@@ -25,39 +25,39 @@ def jac_loss(pred, target):
 
     return (1 - jac) * smooth
 
-""" Custom loss """
+""" Custom loss. """
 def custom_loss(pred, target, alpha):    
     return ((1 - alpha) * dc_loss(pred, target)) + (alpha * jac_loss(pred, target))
 
-""" Jaccard index """
+""" Jaccard index. """
 def binary_jac(maskf, predf):
     m = BinaryJaccardIndex()
     m.update(maskf, predf)
 
     return m.compute()
 
-""" Accuracy = (tp + tn) / (tp + tn + fp + tn) """
+""" Accuracy = (tp + tn) / (tp + tn + fp + tn). """
 def binary_acc(maskf, predf):
     m = BinaryAccuracy()
     m.update(maskf, predf)
 
     return m.compute()
 
-""" Precision = tp / (tp + fp) """
+""" Precision = tp / (tp + fp). """
 def binary_prec(maskf, predf):
     m = BinaryPrecision()
     m.update(maskf, predf)
 
     return m.compute()
 
-""" Recall = tp / (tp + fn) """
+""" Recall = tp / (tp + fn). """
 def binary_rec(maskf, predf):
     m = BinaryRecall()
     m.update(maskf, predf)
 
     return m.compute()
 
-""" F1-score = 2 * ((P * R) / (P + R)) """
+""" F1-score = 2 * ((P * R) / (P + R)). """
 def binary_f1s(maskf, predf):
     m = BinaryF1Score()
     m.update(maskf, predf)
