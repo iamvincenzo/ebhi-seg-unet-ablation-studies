@@ -8,6 +8,7 @@ import torch.nn as nn
 
 
 class DoubleConv(nn.Module):
+    """ Initialize configurations. """
     def __init__(self, args, input_channels, output_channels):
         super(DoubleConv, self).__init__()
 
@@ -71,11 +72,13 @@ class DoubleConv(nn.Module):
                 nn.ReLU(inplace=True)
             )
 
+    """ Method used to get the convolutional layer. """
     def forward(self, x):
         return self.conv(x)
 
 
 class UNET(nn.Module):
+    """ Initialize configurations. """
     def __init__(self, args, in_channels=3, out_channels=1, features=[64, 128, 256, 512]):
         super(UNET, self).__init__()
         self.downs = nn.ModuleList()
@@ -111,6 +114,8 @@ class UNET(nn.Module):
         # saving the model before the training process
         self.save_initial_weights_distribution()
 
+    """ Method used to define the computations needed to create the 
+        output of the neural network given its input. """
     def forward(self, x):
         skip_connections = []
 
@@ -126,20 +131,19 @@ class UNET(nn.Module):
             x = self.ups[idx](x)
             skip_connection = skip_connections[idx//2]
 
-            # if x.shape != skip_connection.shape:
-            #     x = TF.resize(x, size=skip_connection.shape[2:])
-
             concat_skip = torch.cat((skip_connection, x), dim=1)
             x = self.ups[idx + 1](concat_skip)
 
         x = self.final_conv(x)
 
-        # remember: arc_change_net can work both with bcewl_loss and dc_loss/jac_loss
+        # remember: arc_change_net can work both 
+        # with bcewl_loss and dc_loss/jac_loss
         if self.args.loss != 'bcewl_loss':
             x = self.output_activation(x)
 
         return x
     
+    """ Method used to initialize the weights of the network. """
     def initialize_weights(self):
         print('\nPerforming weights initialization...')
 
@@ -161,6 +165,7 @@ class UNET(nn.Module):
                 nn.init.kaiming_uniform_(m.weight)
                 nn.init.constant_(m.bias, 0)
 
+    """ Helper method used to save some data used in ablation studies. """
     def save_initial_weights_distribution(self):
         if (not(self.args.global_ablation) and not(self.args.selective_ablation) and 
             not(self.args.all_one_by_one)):        
