@@ -46,29 +46,24 @@ class Solver(object):
         if self.args.loss == 'dc_loss':
             self.criterion = dc_loss
             print(f'\nDC_loss selected!\n')
-
         elif self.args.loss == 'jac_loss':
             self.criterion = jac_loss
             print(f'\nJAC_loss selected!\n')
-
         elif (self.args.loss == 'bcewl_loss' 
               and self.args.arc_change_net == True):
             self.criterion = nn.BCEWithLogitsLoss()
             print(f'\nBCEWithLogitsLoss selected!\n')
-
         elif self.args.loss == 'custom_loss':
             self.criterion = custom_loss
             print(f'\ncustom_loss selected!\n')
 
-
         # choose optimizer
         if self.args.opt == "SGD":
-            self.optimizer = optim.SGD(
-                self.net.parameters(), lr=self.args.lr, momentum=0.9)
+            self.optimizer = optim.SGD(self.net.parameters(), 
+                                       lr=self.args.lr, momentum=0.9)
         elif self.args.opt == "Adam":
-            self.optimizer = optim.Adam(
-                self.net.parameters(), lr=self.args.lr, betas=(0.9, 0.999))
-
+            self.optimizer = optim.Adam(self.net.parameters(), 
+                                        lr=self.args.lr, betas=(0.9, 0.999))
 
         self.epochs = self.args.epochs
         self.train_loader = train_loader
@@ -76,24 +71,22 @@ class Solver(object):
         self.device = device
         self.writer = writer
 
-
         # visualize the model we built on tensorboard
-        images, _, _ = next(iter(self.train_loader)) # images = images.to(device) ???
+        images, _, _ = next(iter(self.train_loader))
         self.writer.add_graph(self.net, images.to(self.device))
         self.writer.close()
 
-        set_default() # setting fig-style
+        # setting fig-style
+        set_default() 
 
-
-    """ Helper function used to save the model. """
+    """ Method used to save the model. """
     def save_model(self):
         # if you want to save the model
         check_path = os.path.join(self.args.checkpoint_path, self.model_name)
         torch.save(self.net.state_dict(), check_path)
         print('\nModel saved!\n')
 
-
-    """ Helper function used to load the model. """
+    """ Method used to load the model. """
     def load_model(self, device):
         # function to load the model
         check_path = os.path.join(self.args.checkpoint_path, self.model_name)
@@ -101,15 +94,13 @@ class Solver(object):
                                             map_location=torch.device(device)))
         print('\nModel loaded!\n')
 
-
-    """ Helper function used to save collected training-statistics. """
+    """ Method used to save collected training-statistics. """
     def save_json(self, file):
         with open('./statistics/my_dic_train_results_' + self.args.model_name + 
                   '_' + datetime.datetime.now().strftime('%d%m%Y-%H%M%S') + '.json', 'w') as f:
             json.dump(file, f)
 
-
-    """ Helper function used to binarize a tensor (mask)
+    """ Method used to binarize a tensor (mask)
         in order to compute binary accuracy, precision, recall, f1-score. """
     def binarization_tensor(self, mask, pred):
         transform = T.ToPILImage()
@@ -120,8 +111,7 @@ class Solver(object):
 
         return maskf, predf
 
-
-    """ Helper function used to train the model with early stopping implementatinon. """
+    """ Method used to train the model with early stopping implementatinon. """
     def train(self):
         print('\nStarting training...\n')
 
@@ -145,10 +135,10 @@ class Solver(object):
 
             for batch, (images, targets, _) in loop:
                 images = images.to(self.device)
-                targets = targets.to(self.device)  # the ground truth mask
+                targets = targets.to(self.device)
 
                 # zero the parameter gradients
-                self.optimizer.zero_grad()  # self.net.zero_grad() ???
+                self.optimizer.zero_grad()
 
                 # forward + backward + optimize
                 pred = self.net(images)
@@ -160,10 +150,9 @@ class Solver(object):
 
                 loss.backward()
 
-                # plot gradient histogram distribution ????
                 if (batch % self.args.print_every == self.args.print_every - 1) or (batch == 0 and epoch == 0):
-                    self.writer.add_figure('gradients_ebhi-seg', add_gradient_hist(
-                        self.net), global_step=epoch * len(self.train_loader) + batch)
+                    self.writer.add_figure('gradients_ebhi-seg', 
+                                           add_gradient_hist(self.net), global_step=epoch * len(self.train_loader) + batch)
 
                 self.optimizer.step()
 
@@ -173,12 +162,12 @@ class Solver(object):
                 self.check_results(batch, epoch)
 
                 if batch % self.args.print_every == self.args.print_every - 1 or (batch == 0 and epoch == 0):
-                    self.save_model()  # save at the each (print_every - 1)
+                    # save at the each (print_every - 1)
+                    self.save_model()  
 
                     # Test model
                     if self.args.bs_test == 1:
-                        dc_class_test, jac_cust_class_test, jac_class_test, acc_class_test, prec_class_test, rec_class_test, f1s_class_test = self.test(
-                            test_losses)
+                        dc_class_test, jac_cust_class_test, jac_class_test, acc_class_test, prec_class_test, rec_class_test, f1s_class_test = self.test(test_losses)
                     else:
                         self.test(test_losses)
 
@@ -189,12 +178,10 @@ class Solver(object):
                     avg_test_losses.append(batch_avg_test_loss)
 
                     # general dc in train/test
-                    batch_avg_train_dc = np.average(
-                        [1 - x for x in train_losses])
-                    batch_avg_test_dc = np.average(
-                        [1 - x for x in test_losses])
+                    batch_avg_train_dc = np.average([1 - x for x in train_losses])
+                    batch_avg_test_dc = np.average([1 - x for x in test_losses])
 
-                    print(f'\ntrain_loss: {batch_avg_train_loss:.5f} ' +
+                    print(f'\ntrain_loss: {batch_avg_train_loss:.5f} '
                           f'valid_loss: {batch_avg_test_loss:.5f}\n')
 
                     self.writer.add_scalar('batch_avg_train_loss', batch_avg_train_loss,
@@ -207,13 +194,11 @@ class Solver(object):
                     self.writer.add_scalar('batch_avg_test_dc', batch_avg_test_dc,
                                            global_step=epoch * len(self.train_loader) + batch)
                     
-                    
                     """ Saving some data in a dictionary (1). """                    
                     my_dic_train_results['epoch'] = str(epoch)
                     my_dic_train_results['global-step'] = str(epoch * len(self.train_loader) + batch)
                     my_dic_train_results['avg_train_losses'] = [str(x) for x in avg_train_losses]
                     my_dic_train_results['avg_test_losses'] = [str(x) for x in avg_test_losses]
-                    
                     
                     if self.args.bs_test == 1:
                         print(f'Dice for class {[np.average(x) for x in dc_class_test]}')
@@ -225,12 +210,12 @@ class Solver(object):
                         print(f'Binary F1-score for class {[np.average(x) for x in f1s_class_test]}')
 
                         # log a Matplotlib Figure showing the metric for each class
-                        self.writer.add_figure('accuracy_histo', add_metric_hist([np.average(
-                            x) for x in acc_class_test], 'Accuracy'), global_step=epoch * len(self.train_loader) + batch)
-                        self.writer.add_figure('precision_histo', add_metric_hist([np.average(
-                            x) for x in prec_class_test], 'Precision'), global_step=epoch * len(self.train_loader) + batch)
-                        self.writer.add_figure('recall_histo', add_metric_hist([np.average(
-                            x) for x in rec_class_test], 'Recall'), global_step=epoch * len(self.train_loader) + batch)
+                        self.writer.add_figure('accuracy_histo', add_metric_hist([np.average(x) for x in acc_class_test], 'Accuracy'), 
+                                               global_step=epoch * len(self.train_loader) + batch)
+                        self.writer.add_figure('precision_histo', add_metric_hist([np.average(x) for x in prec_class_test], 'Precision'), 
+                                               global_step=epoch * len(self.train_loader) + batch)
+                        self.writer.add_figure('recall_histo', add_metric_hist([np.average(x) for x in rec_class_test], 'Recall'), 
+                                               global_step=epoch * len(self.train_loader) + batch)
                         
                         """ Saving some data in a dictionary (2). """                    
                         my_dic_train_results['dc_class_test_mean'] = [str(np.average(x)) for x in dc_class_test]
@@ -246,10 +231,12 @@ class Solver(object):
                     train_losses = []
                     test_losses = []
 
-                    if epoch > self.args.early_stopping:  # Early stopping with a patience of 1 and a minimum of N epochs
+                    # Early stopping with a patience of 1 and a minimum of N epochs
+                    if epoch > self.args.early_stopping:  
                         if avg_test_losses[-1] >= avg_test_losses[-2]:
                             print('\nEarly Stopping Triggered With Patience 1')
-                            self.save_model()  # save before stop training
+                            # save before stop training
+                            self.save_model()  
                             earlystopping = True
                     if earlystopping:
                         break
@@ -271,10 +258,10 @@ class Solver(object):
         """ Saving collected results in a file. """
         self.save_json(my_dic_train_results)
 
-
-    """ Helper function used to evaluate the model on the test set. """
+    """ Method used to evaluate the model on the test set. """
     def test(self, test_losses):
-        self.net.eval()  # put net into evaluation mode
+        # put net into evaluation mode
+        self.net.eval()  
 
         # since we're not training, we don't need to calculate the gradients for our outputs
         with torch.no_grad():
@@ -317,13 +304,13 @@ class Solver(object):
                     rec_class_test[test_labels].append(binary_rec(maskf, predf))
                     f1s_class_test[test_labels].append(binary_f1s(maskf, predf))
 
-        self.net.train()  # put again the model in trainining-mode
+        # put again the model in trainining-mode
+        self.net.train()  
 
         if self.args.bs_test == 1:
             return dc_class_test, jac_cust_class_test, jac_class_test, acc_class_test, prec_class_test, rec_class_test, f1s_class_test
 
-
-    """ Helper function used to visualize show some samples at
+    """ Method used to visualize show some samples at
         the first batch of each epoch to check model improvements. """
     def check_results(self, batch, epoch):
         with torch.no_grad():
@@ -341,15 +328,13 @@ class Solver(object):
 
                 self.net.train()
 
-
-    """ Helper function used to visualize CNN kernels. """
+    """ Method used to visualize CNN kernels. """
     def kernel_analisys(self):
         print('\nPerforming kernel analysis...\n')
 
         kernels_viewer(self.net, self.writer)
 
-
-    """ Helper function used to visualize CNN activations. """
+    """ Method used to visualize CNN activations. """
     def activation_analisys(self):
         print(f'\nPerforming kernel activations analysis...\n')
 
@@ -357,7 +342,6 @@ class Solver(object):
         img = img.to(self.device)
 
         activations_viewer(self.net, self.writer, img)
-
 
     """ Same as quantify_change_nn_parameters
     def get_tensor_distance(self, mod1, mod2):
@@ -367,21 +351,17 @@ class Solver(object):
         return np.sqrt(np.sum(np.square(p - q)))
     """
 
-
-    """ Helper function used to quantify the difference between the weights of a 
+    """ Method used to quantify the difference between the weights of a 
         neural network before and after training by subtracting the weight tensors 
         of the network before and after training and then computing the L2 norm. """
     def quantify_change_nn_parameters(self, tensor1, tensor2):
-        # Calcolare la differenza tra i due tensori
         diff = tensor2 - tensor1
 
-        # Calcolare la norma L2 della differenza
         norm = torch.norm(diff, p=2)
 
         return norm
 
-
-    """ Helper function used to run the comparison between 
+    """ Method used to run the comparison between 
         weights of the model before and after training. """
     def weights_pre_after_train_analysis(self):
         print('\nPerforming weights analysis pre-training vs. after training to quantify neural network parameter changes...\n')
@@ -405,10 +385,8 @@ class Solver(object):
             self.net1 = UNet(self.args)
             self.net2 = UNet(self.args)
             
-        self.net1.load_state_dict(torch.load(model1_path, 
-                                             map_location=torch.device(self.device)))
-        self.net2.load_state_dict(torch.load(model2_path, 
-                                             map_location=torch.device(self.device)))
+        self.net1.load_state_dict(torch.load(model1_path, map_location=torch.device(self.device)))
+        self.net2.load_state_dict(torch.load(model2_path, map_location=torch.device(self.device)))
         
         mod_name_list = []
         
@@ -418,7 +396,7 @@ class Solver(object):
                 (isinstance(module1, torch.nn.Linear) and ('bias' not in module_name1) 
                 and isinstance(module2, torch.nn.Linear) and ('bias' not in module_name2))):  
 
-                """ Plotting weights
+                """ Plotting weights:
                 tensor1 = module1.weight.detach()
                 tensor2 = module2.weight.detach()
 
@@ -455,13 +433,12 @@ class Solver(object):
 
         return mod_list
         
-
-    """ Helper function used to start some ablation studies. """
+    """ Method used to start some ablation studies. """
     def start_ablation_study(self):
         print('\nStarting ablation studies...\n')
 
-        ablationNn = AblationStudies(self.args, self.model_name, self.train_loader, self.test_loader, 
-                                     self.net, self.criterion, self.device, self.writer)
+        ablationNn = AblationStudies(self.args, self.model_name, self.train_loader, 
+                                     self.test_loader, self.net, self.criterion, self.device, self.writer)
         
         # select the first or first two tensors with major-changing
         mod_name_list = self.weights_pre_after_train_analysis()
@@ -471,7 +448,6 @@ class Solver(object):
         elif self.args.double_mod == True:
             mod_name_list[:] = mod_name_list[0:2]
         
-
         if self.args.global_ablation == True and self.args.grouped_pruning == True:
             ablationNn.iterative_pruning(True)
 
@@ -490,9 +466,7 @@ class Solver(object):
                 ablationNn = AblationStudies(self.args, self.model_name, self.train_loader, self.test_loader, 
                                              self.net, self.criterion, self.device, self.writer)
                 
-
-    """ Helper function used to plot the weights 
-        distribution using histograms. """
+    """ Method used to plot the weights distribution using histograms. """
     def weights_distribution_analysis(self):
         print('\nPerforming weights analysis distribution...\n')
         plot_weights_distribution_histo(self.net, self.writer)
