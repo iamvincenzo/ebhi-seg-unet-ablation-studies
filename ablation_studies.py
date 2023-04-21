@@ -39,8 +39,7 @@ class AblationStudies(object):
         mpl.rcParams.update(mpl.rcParamsDefault)
         self.my_dic_ablation_results = {}
 
-
-    """ Helper function used to determine the number of zeros in the tensor (module), 
+    """ Method used to determine the number of zeros in the tensor (module), 
         in order to determine the local percentage of ablation. """
     def measure_module_sparsity(self, module, weight=True, bias=False, use_mask=False):
         num_zeros = 0
@@ -67,8 +66,7 @@ class AblationStudies(object):
 
         return num_zeros, num_elements, sparsity
 
-
-    """ Helper function used to determine the number of zeros in the model, 
+    """ Method used to determine the number of zeros in the model, 
         in order to determine the global percentage of ablation. """
     def measure_global_sparsity(self, weight=True, bias=False, conv2d_use_mask=False, linear_use_mask=False):
         num_zeros = 0
@@ -91,12 +89,11 @@ class AblationStudies(object):
 
         return num_zeros, num_elements, sparsity
 
-
-    """ Helper function used to removes masks and original weights, not 
+    """ Method used to removes masks and original weights, not 
         the pruning: values remain at zero but are unfrozen. The pruned 
         parameter named name remains permanently pruned, and the parameter 
-        named name+'_orig' is removed from the parameter list. Similarly, 
-        the buffer named name+'_mask' is removed from the buffers. """
+        named name + '_orig' is removed from the parameter list. Similarly, 
+        the buffer named name + '_mask' is removed from the buffers. """
     def remove_parameters(self):
         for module_name, module in self.model.named_modules():
             if isinstance(module, torch.nn.Conv2d):
@@ -120,24 +117,20 @@ class AblationStudies(object):
 
         return self.model
 
-
-    """ Helper function used to save the pruned model
-        and the collected results. """
+    """ Method used to save collected results. """
     def save_abl_results(self):
         """ Saving some statistics. """
         with open('./abl_statistics/ablation_results_' + self.args.model_name + "_" + self.args.run_name + 
                   '_' + datetime.datetime.now().strftime('%d%m%Y-%H%M%S') + '.json', 'w') as f:
             json.dump(self.my_dic_ablation_results, f)
 
-
-    """ Helper function used to save the model. """
+    """ Method used to save the model. """
     def save_abl_model(self):
         check_path = os.path.join(self.args.checkpoint_path, 'pruned_' + self.model_name)            
         torch.save(self.model.state_dict(), check_path)
         print('\nModel saved!\n')
 
-
-    """ Helper function used to prune the model. """
+    """ Method used to prune the model. """
     def iterative_pruning(self, grouped_pruning=False):
         for i in range(self.args.num_iterations):
 
@@ -153,11 +146,10 @@ class AblationStudies(object):
                 
                 """ Globally prunes tensors corresponding to all parameters in parameters_to_prune 
                     by applying the specified pruning_method. Modifies modules in place by:
-                        1. adding a named buffer called name+'_mask' corresponding to the binary 
+                        1. adding a named buffer called name + '_mask' corresponding to the binary 
                             mask applied to the parameter name by the pruning method;
                         2. replacing the parameter name by its pruned version, while the original 
-                            (unpruned) parameter is stored in a new parameter named name+'_orig'. 
-                    
+                            (unpruned) parameter is stored in a new parameter named name + '_orig'.
                     L1Unstructured:
                         Prune (currently unpruned) units in a tensor by zeroing out the ones with the lowest L1-norm. """
                 prune.global_unstructured(parameters_to_prune,
@@ -193,9 +185,7 @@ class AblationStudies(object):
         self.remove_parameters()
         self.save_abl_model()
 
-
-    """ Helper function used to prune only the modules
-        passed as parameters. """
+    """ Method used to prune only the modules passed as parameters. """
     def selective_pruning(self, mod_name_list=['downs.0.conv.0']):
         for i in range(self.args.num_iterations):
 
@@ -222,7 +212,8 @@ class AblationStudies(object):
                         module_num_zeros, module_num_elements, sparsity = self.measure_module_sparsity(
                             module, weight=True, bias=False, use_mask=True)
 
-                        print(f'\nmod_name: {mod_name}, num_zeros: {module_num_zeros}, num_elements: {module_num_elements}, sparsity: {sparsity}')
+                        print(f'\nmod_name: {mod_name}, num_zeros: {module_num_zeros}, '
+                              f'num_elements: {module_num_elements}, sparsity: {sparsity}')
 
                         self.my_dic_ablation_results['sparsity-Conv2d-' + mod_name + '-' + str(i + 1)] = str(sparsity)
 
@@ -240,7 +231,8 @@ class AblationStudies(object):
                         module_num_zeros, module_num_elements, sparsity = self.measure_module_sparsity(
                             module, weight=True, bias=False, use_mask=True)
                         
-                        print(f'\nmod_name: {mod_name}, num_zeros: {module_num_zeros}, num_elements: {module_num_elements}, sparsity: {sparsity}')
+                        print(f'\nmod_name: {mod_name}, num_zeros: {module_num_zeros}, '
+                              f'num_elements: {module_num_elements}, sparsity: {sparsity}')
 
                         self.my_dic_ablation_results['sparsity-Linear' + mod_name + '-' + str(i + 1)] = str(sparsity)
             
@@ -254,15 +246,11 @@ class AblationStudies(object):
             self.save_abl_results()
             self.my_dic_ablation_results = {}
 
-            # retrain model + ecc. ecc.
-            # to do
-
         # at the end remove the mask and the original weights
         self.remove_parameters()
         self.save_abl_model()
 
-
-    """ Helper function used to binarize a tensor (mask)
+    """ Method used to binarize a tensor (mask)
         in order to compute binary accuracy, precision, recall, f1-score. """
     def binarization_tensor(self, mask, pred):
         transform = T.ToPILImage()
@@ -273,8 +261,7 @@ class AblationStudies(object):
 
         return maskf, predf
 
-
-    """ Helper function used to test model's performance after pruning. """
+    """ Method used to test model's performance after pruning. """
     def test(self, itr):
         print(f'\nPerforming validation-test after pruning...\n')
 
@@ -347,8 +334,7 @@ class AblationStudies(object):
                 self.my_dic_ablation_results['rec_class_test_mean'] = [str(np.average(x)) for x in rec_class_test]
                 self.my_dic_ablation_results['f1s_class_test_mean'] = [str(np.average(x)) for x in f1s_class_test]
 
-
-    """ Helper function used to visulize model's performance after pruning."""
+    """ Method used to visulize model's performance after pruning."""
     def check_results(self, batch, itr):
         with torch.no_grad():
             if batch % 50 == 49:
@@ -369,11 +355,10 @@ class AblationStudies(object):
                 # plt.pause(4) #(10)
                 # plt.close()
 
+    # Debugging-methods
+    ###########################################################################################################################
 
-# Debugging-functions
-###########################################################################################################################
-
-    """ Helper function. """
+    """ Method used to plot CNN kernels. """
     def plot_kernels(self, tensor):
         import matplotlib.pyplot as  plt
         
@@ -400,8 +385,7 @@ class AblationStudies(object):
         plt.pause(5)
         plt.close()
 
-
-    """ Helper function. """
+    """ Method sed to plot CNN kernels. """
     def plot_weights_distribution(self, mod_name_list):
         for mod in mod_name_list:
             for module_name, module in self.model.named_modules():
@@ -424,4 +408,4 @@ class AblationStudies(object):
                     break
         print('\n')
 
-###########################################################################################################################
+    ###########################################################################################################################
