@@ -2,7 +2,8 @@ import os
 from glob import glob
 
 
-""" This helper function is used to get the different elements in the two lists. """
+""" Helper function used to get the different 
+    elements in the two lists. """
 def diff(l1, l2):
     c = set(l1).union(set(l2))
     d = set(l1).intersection(set(l2))
@@ -10,7 +11,6 @@ def diff(l1, l2):
     return list(c - d)
 
 ####################################### clean dataset - removing images without mask #######################################
-
 
 """ Helper function used to remove images/masks without 
     the correspondings masks/images. """
@@ -63,13 +63,12 @@ def clean_dataset(args):
 ############################################# removing augmented images ###############################################
 
 """ Helper function used to remove augmented images:
-    images/masks generated with 'data_augmentation.py'. """
+    images/masks generated with data_augmentation.py. """
 def remove_aug(args):
     file_aug_list = [fn for fn in glob(
         args.dataset_path + '*/*/*') if 'aug' in fn]
 
     for filename in file_aug_list:
         os.remove(filename)
-
 
 ########################################################################################################################
