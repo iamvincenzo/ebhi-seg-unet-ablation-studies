@@ -45,13 +45,11 @@ def get_args():
     
     return parser.parse_args()
 
-
 """ Helper function used to get files-name. """
 def get_files_name(path):
     files = glob(path)
 
     return files
-
 
 """ Helper function used to get the best network configuration. """
 def get_best_net_config(args):
@@ -60,7 +58,8 @@ def get_best_net_config(args):
     files = get_files_name(path)
     files = [f for f in files if 'ablation' not in f]
 
-    N = args.num_conf_per_it  # number of iteration per configuration
+    # number of iteration per configuration
+    N = args.num_conf_per_it 
     idx = 0
     mean_test_losses = []
     mean_test_accs = []
@@ -127,14 +126,13 @@ def get_best_net_config(args):
 
     return mean_test_losses, mean_test_accs, mean_test_precs, mean_test_recs
 
-
-""" Helper function used to ??? """
+""" Helper function used to compare ablation results. """
 def compare_ablation_results(args):
     print('\n\nGetting ablation studies statistics results...\n')
     
     path = args.abl_statistics_path + '/*.json'
     files = get_files_name(path)
-    abl_files = [f for f in files if 'ablation' in f] #and args.model_name in f]
+    abl_files = [f for f in files if 'ablation' in f] # and args.model_name in f]
     train_file = [f for f in files if 'ablation' not in f and args.model_name in f]
 
     my_dict_train = {}
@@ -150,7 +148,7 @@ def compare_ablation_results(args):
     drops_max_per_class = [('h', 'h', 0, 0), ('h', 'h', 0, 0), ('h', 'h', 0, 0), 
                            ('h', 'h', 0, 0), ('h', 'h', 0, 0), ('h', 'h', 0, 0)]
     
-    drop_max_per = 'acc_class_test_mean' # metric used fo selection
+    drop_max_per = 'acc_class_test_mean' # metric used for selection
 
     j = 1
     types = ['global_ablation', 'glob_ablation_grouped', 'a_o_b_o', 'al_ol_bl_ol',
@@ -190,7 +188,6 @@ def compare_ablation_results(args):
                 plt.savefig(args.save_imgs_path + str(j) + '_' + exp + '_' + title + '_bp.png', bbox_inches='tight', dpi=1000)      
                 plt.close()  # close the figure when done         
 
-                
                 ax = area_plotting(l0, l1, l2, metric, False)
                 plt.title(title1)
                 # plt.show()
@@ -259,17 +256,16 @@ def compare_ablation_results(args):
                 j += 1           
     """
 
-
 """ Helper function used to run the simulation. """
 def main(args):
     if args.get_best_net_config == True:
         mean_test_losses, mean_test_accs, mean_test_precs, mean_test_recs = get_best_net_config(args)
         for idx, val in enumerate(mean_test_losses):
-            print(f'\n{idx+1}) Configuration: {val[0]}, \n \
-                mean-test-loss: {val[1]:.4f}, mean-train-loss: {val[2]:.4f}, abs-diff: {np.abs(val[1] - val[2]):.4f} \n \
-                mean-test per-class-accuracy: {mean_test_accs[val[3]]}, total: {np.mean(mean_test_accs[val[3]]):.4f} \n \
-                mean-test per-class-precision: {mean_test_precs[val[3]]}, total: {np.mean(mean_test_precs[val[3]]):.4f} \n \
-                mean-test per-class-recall: {mean_test_recs[val[3]]}, total: {np.mean(mean_test_recs[val[3]]):.4f}\n')
+            print(f'\n{idx+1}) Configuration: {val[0]}, \n'
+                  f'mean-test-loss: {val[1]:.4f}, mean-train-loss: {val[2]:.4f}, abs-diff: {np.abs(val[1] - val[2]):.4f} \n'
+                  f'mean-test per-class-accuracy: {mean_test_accs[val[3]]}, total: {np.mean(mean_test_accs[val[3]]):.4f} \n'
+                  f'mean-test per-class-precision: {mean_test_precs[val[3]]}, total: {np.mean(mean_test_precs[val[3]]):.4f} \n'
+                  f'mean-test per-class-recall: {mean_test_recs[val[3]]}, total: {np.mean(mean_test_recs[val[3]]):.4f}\n')
     
     elif args.compare_ablation_results == True:
         compare_ablation_results(args)
