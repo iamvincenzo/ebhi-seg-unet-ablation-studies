@@ -10,14 +10,13 @@ from dataloader_utils import class_dic
 classes = ['Normal', 'Polyp', 'Low-grade IN',
            'High-grade IN', 'Adenocarcinoma', 'Serrated adenoma']
 
-""" Helper function used to set some style
-    configurations. """
+
+""" Helper function used to set some style configurations. """
 def set_default(figsize=(10, 10), dpi=100):
     plt.style.use(['dark_background', 'bmh'])
     plt.rc('axes', facecolor='k')
     plt.rc('figure', facecolor='k')
     plt.rc('figure', figsize=figsize, dpi=dpi)
-
 
 """ Helper function used to plot an histogram to 
     represent the number of samples for each class. """
@@ -41,9 +40,8 @@ def add_sample_hist(n_sample_list, task):
 
     return fig
 
-
-""" Helper function used to plot the gradients list for each layer in the network 
-    and its values. """
+""" Helper function used to plot the gradients hist for 
+    each layer in the network and its values. """
 def add_gradient_hist(net):
     ave_grads = []
     layers = []
@@ -72,7 +70,6 @@ def add_gradient_hist(net):
 
     return fig
 
-
 """ Helper function used to plot the performance of the model
     for each class according to a specific metric. """
 def add_metric_hist(metr_list, metr):
@@ -95,12 +92,10 @@ def add_metric_hist(metr_list, metr):
 
     return fig
 
-
 """ Helper function used to denormalize an image. """
 def denorm(x):
     out = (x + 1) / 2
     return out.clamp_(0, 1)
-
 
 """ Helper function used to plot the image
     of a dataset-sample. """
@@ -111,8 +106,7 @@ def plot_samples(images, mask, labels, args):
         fig.add_subplot(rows, columns, i)
         if i <= args.bs_train:
             if args.norm_input:
-                plt.imshow(
-                    (denorm((images[j].cpu())).numpy()).transpose(1, 2, 0))
+                plt.imshow((denorm((images[j].cpu())).numpy()).transpose(1, 2, 0))
             else:
                 plt.imshow((images[j].cpu().numpy()).transpose(1, 2, 0)) # from [3, 244, 244] to [244, 244, 3]
             plt.title(f'{list(class_dic.keys())[list(class_dic.values()).index(labels[j].item())]}') # class of the sample
@@ -127,7 +121,6 @@ def plot_samples(images, mask, labels, args):
     # plt.show()
 
     return fig
-
 
 """ Helper function used to plot the image
     the mask and the model prediction. """
@@ -149,7 +142,6 @@ def plot_check_results(img, mask, pred, label, args):
     # plt.show()
 
     return fig
-
 
 """ Helper function used to visualize CNN kernels. """
 def kernels_viewer(model, wrt):
@@ -200,7 +192,8 @@ def kernels_viewer(model, wrt):
 conv_output = []
 
 def append_conv(module, input, output):
-    conv_output.append(output.detach().cpu()) # append all the conv layers and their respective wights to the list
+    # append all the conv layers and their respective wights to the list
+    conv_output.append(output.detach().cpu()) 
 
 """ Helper function used to visualize CNN activations. """
 def activations_viewer(net, wrt, img):
@@ -232,7 +225,6 @@ def activations_viewer(net, wrt, img):
         wrt.add_figure('activations_img_grid_' + str(j), act_img_fig)
         j += 1
         
-
 """ Histogram of weights values. """
 def plot_weights_distribution_histo(model, writer, bins = 100):
     for module_name, module in model.named_modules():
@@ -249,7 +241,6 @@ def plot_weights_distribution_histo(model, writer, bins = 100):
             writer.add_figure(title, fig)
 
     writer.close()
-
 
 """ Helper function used to plot some metrics. """
 def bar_plotting(l0, l1, l2, metric):
@@ -273,8 +264,7 @@ def bar_plotting(l0, l1, l2, metric):
 
     return ax
 
-
-""" Helper function. """
+""" Helper function used to plot area graph. """
 def area_plotting(l0, l1, l2, metric, stckd=True, subplts=True):
     index = ['Normal', 'Polyp', 'Low-grade IN', 
              'High-grade IN', 'Adenocarcinoma', 'Serrated adenoma']
@@ -293,8 +283,7 @@ def area_plotting(l0, l1, l2, metric, stckd=True, subplts=True):
 
     return ax
 
-
-""" Helper function. """
+""" Helper function used to plot line graph. """
 def line_plotting(l0, l1, metric):
     index = ['Normal', 'Polyp', 'Low-grade IN', 
              'High-grade IN', 'Adenocarcinoma', 'Serrated adenoma']
