@@ -11,6 +11,7 @@ import torch.nn as nn
 
 
 class UNet(nn.Module):
+    """ Initialize configurations. """
     def __init__(self, args):
         super(UNet, self).__init__()
 
@@ -35,6 +36,7 @@ class UNet(nn.Module):
         self.output = nn.Conv2d(in_channels=64, out_channels=1, kernel_size=1, padding=0)
         self.output_activation = nn.Sigmoid()
 
+    """ Method used to create a convolutional layer. """
     def conv_layer(self, input_channels, output_channels):
         if self.args.use_batch_norm == True:
             conv = nn.Sequential(
@@ -94,6 +96,8 @@ class UNet(nn.Module):
 
         return conv
 
+    """ Method used to define the computations needed to create the 
+        output of the neural network given its input. """
     def forward(self, img):                        # img --> bs x 3 x 224 x 224 (bs, ch, w, h)
         x1 = self.down_1(img)                      # bs x 64 x 224 x 224
         x2 = self.max_pool(x1)                     # bs x 64 x 112 x 112
