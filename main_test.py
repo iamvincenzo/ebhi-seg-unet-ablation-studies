@@ -13,19 +13,20 @@ from dataloader_utils import get_proportioned_dataset, EBHIDataset
 from plotting_utils import set_default, plot_samples, add_sample_hist, add_metric_hist
 
 
-""" Helper function used to check the validity of some cmd parameters. """
+""" Helper function used to check the validity 
+    of some cmd parameters. """
 def check_args_integrity(args, tn_l, te_l):
     if (args.bs_train < 0):
         print('\nError: bs_train must be positive!')
         os._exit(1)
     if (args.bs_train > tn_l):
-        print('\nError: bs_train must be smaller than len(train-set)!')
+        print('\nError: bs_train must be smaller than train-set lenght!')
         os._exit(1)
     if (args.bs_test < 0):
         print('\nError: bs_test must be positive!')
         os._exit(1)
     if (args.bs_test > te_l):
-        print('\nError: bs_test must be smaller than len(test-set)!')
+        print('\nError: bs_test must be smaller than test-set lenght!')
         os._exit(1)
     if (args.epochs < 0):
         print('\nError: epochs must be positive!')
@@ -46,21 +47,21 @@ def check_args_integrity(args, tn_l, te_l):
         print('\nError: only one between random_structured and random_unstructured!')
         os._exit(1)
     if (args.single_mod == True and args.double_mod == True):
-        print('\nError: choose only one between "single_mod" and "double_mod"!')
+        print('\nError: choose only one between single_mod and double_mod!')
         os._exit(1)
     if ((args.selective_ablation == True and args.random_structured == False) and 
         (args.selective_ablation == True and args.random_unstructured == False)):        
-            print('\nError: at least one of "random_structured" or "random_unstructured" has to' + 
+            print('\nError: at least one of random_structured or random_unstructured has to' + 
                   'be selected with "selective_ablation"!')
             os._exit(1)
     if ((args.all_one_by_one == True and args.random_structured == False) and 
         (args.all_one_by_one == True and args.random_unstructured == False)):        
-            print('\nError: at least one of "random_structured" or "random_unstructured" has to' + 
+            print('\nError: at least one of random_structured or random_unstructured has to' + 
                   'be selected with "all_one_by_one"!')
             os._exit(1)
     if ((args.all_one_by_one == True and args.single_mod == True) or 
         (args.all_one_by_one == True and args.double_mod == True)):        
-            print('\nError: you can\'t select "all_one_by_one" with "single_mod"/"double_mod"!')
+            print('\nError: you can\'t select all_one_by_one with single_mod/double_mod!')
             os._exit(1)
     
 
@@ -104,7 +105,7 @@ def get_args():
     parser.add_argument('--opt', type=str, default='SGD',
                         choices=['SGD', 'Adam'], help='optimizer used for training')
     parser.add_argument('--early_stopping', type=int, default=5,
-                        help='threshold used to manipulate the early stopping epoch tresh')
+                        help='threshold used to manipulate the early stopping')
     ###################################################################
 
     # training-parameters (3)
@@ -141,55 +142,55 @@ def get_args():
     # model-types
     ###################################################################
     parser.add_argument('--pretrained_net', action='store_true',
-                        help='load pretrained model on BRAIN MRI')
+                        help='load pretrained model on BRAIN-MRI')
     # this model architecture can be modified.
     # arc_change_net can be used with standard dice_loss/jac_loss or bce_with_logits_loss
     parser.add_argument('--arc_change_net', action='store_true',
-                        help='load online model implementation')
+                        help='load another model implementation')
     # num of filters in each convolutional layer (num of channels of the feature-map): 
     # so you can modify the network architecture
     parser.add_argument('--features', nargs='+',
-                        help='list of features value', default=[64, 128, 256, 512])
+                        help='list of features values', default=[64, 128, 256, 512])
     ###################################################################
 
     # data transformation
     ###################################################################
     parser.add_argument('--norm_input', action='store_true',
-                        help='normalize input images')
+                        help='normalize input')
     ###################################################################
 
     # data-manipulation 
     # (hint: select only one of the options below)
     ###################################################################
     parser.add_argument('--apply_transformations', action='store_true',
-                        help='Apply some transformations to images and corresponding masks')
+                        help='apply some transformations to images and corresponding masks')
     parser.add_argument('--dataset_aug', type=int, default=0,
                         help='data augmentation of each class')
     parser.add_argument('--balanced_trainset', action='store_true',
-                        help='generates a well balanced train_loader')
+                        help='generate a well balanced train_loader')
     ###################################################################
 
 
     # ablation-Studies (1) - types
     ###################################################################
     parser.add_argument('--global_ablation', action='store_true',
-                        help='starts an ablation study')
+                        help='start an ablation study with global_unstructured or l1_unstructured')
     parser.add_argument('--grouped_pruning', action='store_true',
-                        help='to do')
+                        help='start an ablation study with global_unstructured')
     ###################################################################
     parser.add_argument('--all_one_by_one', action='store_true',
-                        help='to do')
+                        help='start an ablation study with random_structured or random_unstructured')
     ###################################################################
     parser.add_argument('--selective_ablation', action='store_true',
-                        help='starts an ablation study')
+                        help='start an ablation study with random_structured or random_unstructured')
     parser.add_argument('--single_mod', action='store_true',
-                        help='starts an ablation study with only one module')
+                        help='start an ablation study with only one module')
     parser.add_argument('--double_mod', action='store_true',
-                        help='starts an ablation study with two modules')
+                        help='start an ablation study with two modules')
     parser.add_argument('--random_structured', action='store_true',
-                        help='starts an ablation study c')
+                        help='start an ablation study with random_structured')
     parser.add_argument('--random_unstructured', action='store_true',
-                        help='starts an ablation study')
+                        help='start an ablation study with random_unstructured')
     ###################################################################
 
     # ablation-Studies (2) - parameters
@@ -205,9 +206,9 @@ def get_args():
      # weights-analysis 
     ###################################################################
     parser.add_argument('--weights_distr_histo', action='store_true',
-                        help='starts an ablation study')
+                        help='plot weights distribution histogram')
     parser.add_argument('--plt_weights_distr', action='store_true',
-                        help='starts an ablation study')
+                        help='plot filters as iamges (visualize CNN kernels)')
     ###################################################################
 
 
@@ -221,31 +222,31 @@ def main(args):
         datetime.datetime.now().strftime('%d%m%Y-%H%M%S')
     writer = SummaryWriter(log_folder)
 
-    set_default() # setting fig-style
+    # setting fig-style
+    set_default() 
 
     # """ Dataset cleaning:
     #     it has to be executed only the first time you unzip dataset 
-    #     because Low-grade IN: 639(imgs), 637(masks). """
+    #     because Low-grade IN: 639(imags), 637(masks). """
     # from data_cleaning import clean_dataset
     # clean_dataset(args) 
 
-    """ Data augmentation with albumentations:
-        remove augmented images if in the previous experiment we used data augmentation. """
+    """ Data augmentation with albumentations: remove augmented images if 
+        in the previous experiment we used data augmentation. """
     remove_aug(args)
 
     ##################################
     # N.B: balanced != proportionate #
     ##################################
 
-    """ Creation of a well-proportioned dataset:
+    """ Creation of a well-proportionate dataset:
         You need to take a certain percentage of examples (randomly) from each 
-        class for the train and test/validation set, 80% and 20% respectively.
+        class for the train and test(validation) set, 80% and 20% respectively.
 
         Specifically, this function returns some lists of paths for image files, mask files
-        both for train and test/validation set.
-        
-        - w_train_clss is a list that contains the number of elements for each class in train-set.
-        - w_test_clss is a list that contains the number of elements for each class in test set.         
+        both for train and test(validation) set.
+            - w_train_clss is a list that contains the number of elements for each class in train-set.
+            - w_test_clss is a list that contains the number of elements for each class in test set.         
         
         N.B: different random seeds generate different train and test/validation sets. """
     img_files_train, mask_files_train, img_files_test, mask_files_test, w_train_clss, w_test_clss = get_proportioned_dataset(args)
@@ -275,25 +276,21 @@ def main(args):
         train_dataloader, class_weights = balance_d.get_loader()
         print(f'\nBalanced train-dataloader created!\n')
 
-        """ Adding histograms to tensorboard to represent the weight 
-        of each class in creating the balanced train_loader. """
-        writer.add_figure('weights_balanced_trainloader',
-                          add_metric_hist(class_weights, 'weights'))
+        # Adding histograms to tensorboard to represent the weight 
+        # of each class in creating the balanced train_loader
+        writer.add_figure('weights_balanced_trainloader', add_metric_hist(class_weights, 'weights'))
 
-
-    """ Adding histograms to tensorboard to represent the number of samples 
-        for each class, both for train and test/validation set. """
-    writer.add_figure('train_per_class_histo',
-                      add_sample_hist(w_train_clss, 'train'))
-    writer.add_figure('test_per_class_histo',
-                      add_sample_hist(w_test_clss, 'test'))
+    # Adding histograms to tensorboard to represent the number of samples 
+    # for each class, both for train and test(validation) set
+    writer.add_figure('train_per_class_histo', add_sample_hist(w_train_clss, 'train'))
+    writer.add_figure('test_per_class_histo', add_sample_hist(w_test_clss, 'test'))
     writer.close()
 
     # showing some samples
     print(f'First sample in train-set: {img_files_train[0]}')
     print(f'First sample in test-set: {img_files_test[0]}\n')
 
-    """ Check the validity of some cmd parameters. """
+    # Check the validity of some cmd parameters
     check_args_integrity(args, len(img_files_train), len(img_files_test))
 
     # Dataset stores all your data, and Dataloader is can be used to iterate through the data,
@@ -304,23 +301,19 @@ def main(args):
         train_dataset = EBHIDataset(img_files_train, mask_files_train, args, train=True)
     test_dataset = EBHIDataset(img_files_test, mask_files_test, args, train=False)
 
-    """ DataLoader wraps an iterable around the Dataset to enable easy access to the samples
-        according to a specific batch-size (load the data in memory). """
+    # DataLoader wraps an iterable around the Dataset to enable easy access to the samples
+    # according to a specific batch-size (load the data in memory)
     if args.balanced_trainset == False:
-        train_dataloader = DataLoader(
-            train_dataset, batch_size=args.bs_train, shuffle=True, num_workers=args.workers)
-    test_dataloader = DataLoader(
-        test_dataset, batch_size=args.bs_test, shuffle=True, num_workers=args.workers)
+        train_dataloader = DataLoader(train_dataset, batch_size=args.bs_train, shuffle=True, num_workers=args.workers)
+    test_dataloader = DataLoader(test_dataset, batch_size=args.bs_test, shuffle=True, num_workers=args.workers)
 
-    """ Specify the device type responsible to load a tensor into memory. """
+    # Specify the device type responsible to load a tensor into memory
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f'Device: {device}')
 
-    """ Get some train-set samples (images) and display them
-        in tensorboard. """
-    images, masks, labels = next(iter(train_dataloader)) # images = images.to(device) ??? # masks = masks.to(device) ????
-    writer.add_figure('ebhi-seg_samples',
-                      plot_samples(images, masks, labels, args))
+    # Get some train-set samples (images) and display them in tensorboard
+    images, masks, labels = next(iter(train_dataloader))
+    writer.add_figure('ebhi-seg_samples', plot_samples(images, masks, labels, args))
     writer.close() 
 
     # define solver class
@@ -330,9 +323,8 @@ def main(args):
                     writer=writer,
                     args=args)
         
-    if (args.global_ablation == True or 
-        args.selective_ablation == True or
-        args.all_one_by_one == True):
+    if (args.global_ablation == True or args.selective_ablation == True 
+        or args.all_one_by_one == True):
         solver.start_ablation_study()
     elif args.weights_distr_histo == True:
         solver.weights_distribution_analysis()

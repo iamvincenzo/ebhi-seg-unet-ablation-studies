@@ -6,24 +6,16 @@ from torch.utils.data import Dataset
 import torchvision.transforms as transforms
 import torchvision.transforms.functional as TF
 
-
+""" Helper function used to get the different
+    elements in the two lists. """
 def diff(l1, l2):
-    """ This function is used to get the different
-        elements in the two lists.
-
-    Args:
-        l1 (class 'list'): first list
-        l2 (class 'list'): second list
-
-    Returns:
-        class 'list': list that contains all the elements that are in l1 but not in l2 
-                      and all the elements that are in l2 but not in l1. 
-    """
     c = set(l1).union(set(l2))
     d = set(l1).intersection(set(l2))
 
     return list(c - d)
 
+""" Helper function used to generate a proportioned dataset:
+    80% training and 20% test(validation). """
 def get_proportioned_dataset(args):
     classes = ['Normal', 'Polyp', 'Low-grade IN',
                'High-grade IN', 'Adenocarcinoma', 'Serrated adenoma']
@@ -70,10 +62,10 @@ def get_proportioned_dataset(args):
             1. Insert in mask_files_per_class all the paths of all images of all classes;
             2. Randomly select (without repetition) 80% of paths from mask_files_per_class 
                 for each class and put them in mask_files_train;
-            3. Use diff function to get the unseleted item and put them in mask_files_test.
+            3. Use diff function to get the unselected item and put them in mask_files_test.
     """
-    random.seed(
-        args.random_seed)  # hyperparameter used to create different random-sets
+    # hyperparameter used to create different random-sets
+    random.seed(args.random_seed)
 
     mask_files_per_class = []
     mask_files_train = []
@@ -108,8 +100,7 @@ def get_proportioned_dataset(args):
     print(f'Number of elements in img_files_test: {len(img_files_test)}')
 
     # check for duplicates
-    print(
-        f'\nCheck duplicates in train/test set: {list(set(mask_files_train).intersection(mask_files_test))}\n')
+    print(f'\nCheck duplicates in train/test set: {list(set(mask_files_train).intersection(mask_files_test))}\n')
 
     return img_files_train, mask_files_train, img_files_test, mask_files_test, w_train_clss, w_test_clss
 
@@ -124,13 +115,15 @@ class_dic = {
 
 """ Custom class used to create the training and test sets. """
 class EBHIDataset(Dataset):
+    """ Initialize configurations. """
     def __init__(self, image_paths, target_paths, args, train=True):
         self.image_paths = image_paths
         self.target_paths = target_paths
         self.args = args
         self.train = train
-        # random.seed(args.random_seed)  # hyperparameter used to repeatability of experiments with transformations
 
+    """ Method used to apply transformation to images 
+        and their corresponding masks."""
     def transform(self, image, mask):
          # transformation applied only if required and only to training images
         if self.args.apply_transformations == True and self.train == True:
@@ -157,11 +150,13 @@ class EBHIDataset(Dataset):
 
         # input normalization if required
         if self.args.norm_input == True:
-            image = TF.normalize(image, mean=(
-                0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5))
+            image = TF.normalize(image, 
+                                 mean=(0.5, 0.5, 0.5), 
+                                 std=(0.5, 0.5, 0.5))
 
         return image, mask
 
+    """ Method used to get (image, mask, label). """
     def __getitem__(self, index):
         image = Image.open(self.image_paths[index])
         mask = Image.open(self.target_paths[index])
