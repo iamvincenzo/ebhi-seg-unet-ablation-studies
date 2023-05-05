@@ -24,7 +24,6 @@ from metrics import jac_loss, binary_jac, binary_acc, binary_prec, binary_rec, b
 class AblationStudies(object):
     """ Initialize configurations. """
     def __init__(self, args, model_name, train_loader, test_loader, model, criterion, device, writer):
-        super(AblationStudies, self).__init__()
         self.args = args
         self.model_name = model_name
         self.train_loader = train_loader

@@ -1,7 +1,7 @@
 import os
 import torch
-import datetime
 import argparse
+from datetime import datetime
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 
@@ -64,7 +64,6 @@ def check_args_integrity(args, tn_l, te_l):
             print('\nError: you can\'t select all_one_by_one with single_mod/double_mod!')
             os._exit(1)
     
-
 """ Helper function used to get cmd parameters. """
 def get_args():
     parser = argparse.ArgumentParser()
@@ -170,7 +169,6 @@ def get_args():
                         help='generate a well balanced train_loader')
     ###################################################################
 
-
     # ablation-Studies (1) - types
     ###################################################################
     parser.add_argument('--global_ablation', action='store_true',
@@ -211,16 +209,13 @@ def get_args():
                         help='plot filters as iamges (visualize CNN kernels)')
     ###################################################################
 
-
     return parser.parse_args()
-
 
 """ Main function used to run the experiment/analysis. """
 def main(args):
     # tensorboard specifications
-    log_folder = './runs/' + args.run_name + '_' + \
-        datetime.datetime.now().strftime('%d%m%Y-%H%M%S')
-    writer = SummaryWriter(log_folder)
+    date =  '_' + datetime.now().strftime('%d%m%Y-%H%M%S')
+    writer = SummaryWriter('./runs/' + args.run_name + date)
 
     # setting fig-style
     set_default() 
@@ -330,11 +325,11 @@ def main(args):
         solver.weights_distribution_analysis()
     else:
         solver.train()    
-    
-    
+       
 """ Starting the simulation. """ 
 if __name__ == "__main__":
     args = get_args()
+
     # if folder doesn't exist, then create it
     if not os.path.isdir(args.checkpoint_path):
         os.makedirs(args.checkpoint_path)
@@ -342,5 +337,6 @@ if __name__ == "__main__":
         os.makedirs('statistics')
     if not os.path.isdir('abl_statistics'):
         os.makedirs('abl_statistics')
+
     print(f'\n{args}')
     main(args)

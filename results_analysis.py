@@ -42,7 +42,6 @@ def get_args():
                         default='./data/abl_results_images/', help='path were to get model statistics')
     ###################################################################
     
-    
     return parser.parse_args()
 
 """ Helper function used to get files-name. """
@@ -270,11 +269,13 @@ def main(args):
     elif args.compare_ablation_results == True:
         compare_ablation_results(args)
 
-
+""" Starting the simulation. """
 if __name__ == "__main__":
     # set_default()
-    args = get_args()
+    args = get_args()    
     print(f'\n{args}')
+
     if not os.path.isdir(args.save_imgs_path):
         os.makedirs(args.save_imgs_path)
+
     main(args)

@@ -8,10 +8,9 @@ import albumentations as A
     to some images and masks passed as argument; 
     (ii) save them in order to augment data available 
     for training and testing (augment the entire dataset).  """
-class AugmentData():
+class AugmentData(object):
     """ Initialize configurations. """
     def __init__(self, args, image_paths, mask_paths):
-        super(AugmentData, self).__init__()
         self.args = args
         self.image_paths = image_paths 
         self.mask_paths = mask_paths

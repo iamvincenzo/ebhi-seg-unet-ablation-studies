@@ -43,6 +43,9 @@ def clean_dataset(args):
     for t in diffs:
         if len(t[1]) > 0:  # list that contains files name
 
+            """ Crea una lista di nomi di file da rimuovere in base ai parametri contenuti in una 
+                lista di tuple t. La lista di nomi di file viene creata utilizzando la funzione 
+                glob() e poi filtrata in base ai nomi di file specificati in t[1]. """
             removing_files = [fn for n in t[1] for fn in glob(
                 args.dataset_path + t[0] + '/' + t[2] + '/*') if n in fn]
 

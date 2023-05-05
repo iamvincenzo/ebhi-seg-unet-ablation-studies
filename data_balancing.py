@@ -9,10 +9,9 @@ from dataloader_utils import get_proportioned_dataset, EBHIDataset
 """ Custom class that uses WeightedRandomSampler to sample 
     from dataset such that the model sees approximately each
     class the same number of times. """
-class BalanceDataset():
+class BalanceDataset(object):
     """ Initialize configurations. """
     def __init__(self, args, img_files_train, mask_files_train, w_train_clss):
-        super(BalanceDataset, self).__init__()
         self.args = args
         self.img_files_train = img_files_train
         self.mask_files_train = mask_files_train
