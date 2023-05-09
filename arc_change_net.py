@@ -6,7 +6,7 @@ import os
 import torch
 import torch.nn as nn
 
-
+""" Class for double-convolution model.  """
 class DoubleConv(nn.Module):
     """ Initialize configurations. """
     def __init__(self, args, input_channels, output_channels):
@@ -77,6 +77,7 @@ class DoubleConv(nn.Module):
         return self.conv(x)
 
 
+""" Class for customizable UNet architecture. """
 class UNET(nn.Module):
     """ Initialize configurations. """
     def __init__(self, args, in_channels=3, out_channels=1, features=[64, 128, 256, 512]):

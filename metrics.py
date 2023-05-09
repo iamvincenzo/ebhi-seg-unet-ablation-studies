@@ -12,7 +12,7 @@ def dc_loss(pred, target):
     return 1 - ((2. * intersection + smooth) /
                 (predf.sum() + targetf.sum() + smooth))
 
-""" IoU loss (Jaccard loss). """
+""" IoU loss (Jaccard loss) function. """
 def jac_loss(pred, target):
     smooth = 1.
 
@@ -25,7 +25,7 @@ def jac_loss(pred, target):
 
     return (1 - jac) * smooth
 
-""" Custom loss. """
+""" Custom loss function. """
 def custom_loss(pred, target, alpha):    
     return ((1 - alpha) * dc_loss(pred, target)) + (alpha * jac_loss(pred, target))
 

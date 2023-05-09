@@ -17,18 +17,16 @@ class BalanceDataset(object):
         self.mask_files_train = mask_files_train
         self.w_train_clss = w_train_clss
 
-    """ Method used to generates a well balanced 
-        trainloader: the pairs (image, mask) selected 
-        for training are equal in number for the 
-        various classes. """
+    """ Method used to generates a well balanced trainloader: the pairs (image, mask) selected 
+        for training are equal in number for the various classes. """
     def get_loader(self):
         print(f'\nPerforming data balancing...\n')
         
-        # Commentato perchè volendo applicare sia data augmentation che data balancing
-        # è necessario fornire il train-set aumentato. Inoltre, si evita di richiamare lo
-        # stesso metodo get_proportioned_dataset due volte. 
-        # Tuttavia, la riga di codice non viene rimossa poichè potrebbe essere utile per altri scopi
-        # futuri nel caso in cui BalanceDataset venga usata indipendentemente da get_proportioned_dataset prima.
+        # # Commentato perchè volendo applicare sia data augmentation che data balancing
+        # # è necessario fornire il train-set aumentato. Inoltre, si evita di richiamare lo
+        # # stesso metodo get_proportioned_dataset due volte. 
+        # # Tuttavia, la riga di codice non viene rimossa poichè potrebbe essere utile per altri scopi
+        # # futuri nel caso in cui BalanceDataset venga usata indipendentemente da get_proportioned_dataset prima.
         # img_files_train, mask_files_train, _, _, w_train_clss, _ = get_proportioned_dataset(self.args)
 
         # forcing dataset creation to apply transformation if not applied with data-augmentation

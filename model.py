@@ -10,6 +10,7 @@ import torch
 import torch.nn as nn
 
 
+""" Class for UNet architecture. """
 class UNet(nn.Module):
     """ Initialize configurations. """
     def __init__(self, args):
