@@ -127,37 +127,3 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
-
-data/
-
-other/
-
-hub/
-
-slurm/
-
-bash_test/
-
-runs_/
-
-runs/
-
-model_save/
-
-hpc_exp_/
-
-statistics/
-
-abl_statistics/
-
-abl_statistics_/
-
-altro/
-
-*.ipynb
-
-*.bat
-
-*.bash
-
-3_test.txt
