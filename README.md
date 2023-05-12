@@ -32,8 +32,6 @@ The results are contained within the "final_consideration.pdf" file.
 ## The parameters that can be provided through the command line and allow customization of the execution are:
 
 
-Certainly! Here's an updated version of the table with additional details in the "Value Description" column:
-
 | Key                   | Value Description                                          |
 |-----------------------|------------------------------------------------------------|
 | run_name              | The name assigned to the current run                        |
