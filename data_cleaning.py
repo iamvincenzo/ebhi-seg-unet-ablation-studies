@@ -3,65 +3,42 @@ from glob import glob
 from dataloader_utils import classes
 
 
-""" Helper function used to get the 
-    different elements in the two lists. """
-def diff(l1, l2):
-    c = set(l1).union(set(l2))
-    d = set(l1).intersection(set(l2))
-
-    return list(c - d)
-
-####################################### clean dataset - removing images without mask #######################################
-
-""" Helper function used to remove (images, masks) 
-    without the correspondings masks/images. """
-def clean_dataset(args):   
-    diffs = []
-
+""" Helper function used to remove images 
+    without their corresponding masks and viceversa.  """
+def clean_dataset(args):
     print(f'\nPerforming dataset cleaning...\n')
 
     for c in classes:
-        file_name = os.listdir(args.dataset_path + c + '/image')
-        mask_name = os.listdir(args.dataset_path + c + '/label')
+        imgs_path = os.path.join(args.dataset_path, c, 'image')
+        masks_path = os.path.join(args.dataset_path, c, 'label')
 
-        print(f'{c}: {len(file_name)}, {len(mask_name)}')
+        # convert the list to a set in order to perform operations such
+        # as identifying elements that are in one list but not in the other
+        imgs = set(os.listdir(imgs_path))
+        masks = set(os.listdir(masks_path))
+        # return the files in imgs without
+        # corresponding mask (need to be removed)
+        missing_masks = imgs - masks
+        # return the files in masks without
+        # corresponding images (need to be removed)
+        missing_images = masks - imgs
 
-        if len(diff(file_name, mask_name)) > 0:
-            if (len(file_name) > len(mask_name)):
-                # trace the directory where to remove files: 'image' or 'label'
-                diffs.append((c, diff(file_name, mask_name), 'image'))
-            else:
-                diffs.append((c, diff(file_name, mask_name), 'label'))
+        print(f"Class analysis: {c}...")
 
-    # debugging
-    print(f'\nDifferences between image-label directories: {diffs}\n')
-    
-    # removing images without label(seg-mask) or mask without images
-    removing_files = []
-    for t in diffs:
-        if len(t[1]) > 0:  # list that contains files name
+        # removing images without corresponding masks
+        for image_file in missing_masks:
+            os.remove(os.path.join(imgs_path, image_file))
+            print(f'\tRemoved image file: {image_file}')
 
-            """ Crea una lista di nomi di file da rimuovere in base ai parametri contenuti in una 
-                lista di tuple t. La lista di nomi di file viene creata utilizzando la funzione 
-                glob() e poi filtrata in base ai nomi di file specificati in t[1]. """
-            removing_files = [fn for n in t[1] for fn in glob(
-                args.dataset_path + t[0] + '/' + t[2] + '/*') if n in fn]
+        # removoving masks without corresponding images
+        for label_file in missing_images:
+            os.remove(os.path.join(masks_path, label_file))
+            print(f'\tRemoved mask file: {label_file}')
 
-            for rmf in set(removing_files):
-                os.remove(rmf)
+        print(f"{c}: {len(set(os.listdir(imgs_path)))}, "
+              f" {len(set(os.listdir(masks_path)))}\n")
 
-    print('Checking results: \n')
-
-    for c in classes:
-        file_name = os.listdir(args.dataset_path + c + '/image')
-        mask_name = os.listdir(args.dataset_path + c + '/label')
-
-        print(f'{c}: {len(file_name)}, {len(mask_name)}')
-
-#######################################################################################################################
-
-
-############################################# removing augmented images ###############################################
+    print('Data cleaning done...\n')
 
 """ Helper function used to remove augmented images:
     (images, masks) generated with 'data_augmentation.py'. """
@@ -71,5 +48,3 @@ def remove_aug(args):
 
     for filename in file_aug_list:
         os.remove(filename)
-
-########################################################################################################################

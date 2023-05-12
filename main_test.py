@@ -219,13 +219,13 @@ def main(args):
     writer = SummaryWriter('./runs/' + args.run_name + date)
 
     # setting fig-style
-    set_default() 
+    set_default()
 
     # """ Dataset cleaning:
     #     it has to be executed only the first time you unzip dataset 
     #     because Low-grade IN: 639(imags), 637(masks). """
     # from data_cleaning import clean_dataset
-    # clean_dataset(args) 
+    # clean_dataset(args)
 
     """ Data augmentation with albumentations: remove augmented 
         images if in the previous experiment we used data augmentation. """
