@@ -1,108 +1,10 @@
+import os
 import math
 import random
 from PIL import Image
-from glob import glob
 from torch.utils.data import Dataset
 import torchvision.transforms as transforms
 import torchvision.transforms.functional as TF
-
-""" Helper function used to get the different
-    elements in the two lists. """
-def diff(l1, l2):
-    c = set(l1).union(set(l2))
-    d = set(l1).intersection(set(l2))
-
-    return list(c - d)
-
-""" Helper function used to generate a proportioned dataset:
-    80% training and 20% test(validation). """
-def get_proportioned_dataset(args):
-    classes = ['Normal', 'Polyp', 'Low-grade IN',
-               'High-grade IN', 'Adenocarcinoma', 'Serrated adenoma']
-
-    """ Getting the number of elements per class. """
-    lenghts = []
-    for _, c in enumerate(classes):
-        # the glob module finds all the pathnames matching a specified pattern
-        tmp = glob(args.dataset_path + c + '/label/*')
-        lenghts.append(len(tmp))
-    print(f'\nNumber of elements per class: {lenghts}')
-
-    """ Training-set should contain the 80% of the total samples:
-        so we get 80% of elements for each class to create the train-set. 
-
-        Test-set should contain the 20% of the toal samples:
-        so we get 20% of elements for each class to create the test-set. 
-        
-        The total number of samples is 2226: 
-            - 2226*0.8 = 1781 
-            - 2226*0.2 = 445 
-        
-        The treshold th is used to get different round to obtain 1781
-        as the number of samples contained in the train-set:
-            ex:  int(math.ceil(0.8 * 61)) = 49 vs. int(0.8 * 61) = 48. 
-    """
-    th = args.th  # threshold used to get 2226*0.8=1781 (num-img in train-set)
-
-    # list that contains the weighted number of elements per class to create the train-set
-    w_train_clss = []
-    for i in lenghts:
-        if i < th:
-            w_train_clss.append(int(math.ceil(0.8 * i)))
-        else:
-            w_train_clss.append(int(0.8 * i))
-    w_test_clss = [e1 - e2 for (e1, e2) in zip(lenghts, w_train_clss)]
-    print(f'Number of elements in train-set: {sum(w_train_clss)}')
-    print(
-        f'Number of elements in test-set: {sum(lenghts, 0) - sum(w_train_clss, 0)}')
-    print(f'Number of elements per class to create train-set: {w_train_clss}')
-    print(f'Number of elements per class to create test-set: {w_test_clss}')
-
-    """ Idea of the following algorithm:
-            1. Insert in mask_files_per_class all the paths of all images of all classes;
-            2. Randomly select (without repetition) 80% of paths from mask_files_per_class 
-                for each class and put them in mask_files_train;
-            3. Use diff function to get the unselected item and put them in mask_files_test.
-    """
-    # hyperparameter used to create different random-sets
-    random.seed(args.random_seed)
-
-    mask_files_per_class = []
-    mask_files_train = []
-    img_files_train = []
-    mask_files_test = []
-    img_files_test = []
-
-    for i, c in enumerate(classes):
-        # creating a list of lists(path names per class)
-        mask_files_per_class.append(
-            glob(args.dataset_path + c + '/label/*'))
-
-    for i, l in enumerate(mask_files_per_class):
-        # generate n-unique samples from a sequence(list containing path names per class) without repetition.
-        mylist = random.sample(l, w_train_clss[i])
-        mask_files_train += mylist
-        # insert in test-set non-selected-samples used to create training-set
-        mask_files_test += diff(mylist, l)
-
-    print(f'\nNumber of elements in mask_files_train: {len(mask_files_train)}')
-    print(f'Number of elements in mask_files_test: {len(mask_files_test)}')
-
-    for i in mask_files_train:
-        # creating training-img path
-        img_files_train.append(i.replace('label', 'image'))
-
-    for i in mask_files_test:
-        img_files_test.append(i.replace('label', 'image')
-                              )  # creating test-img path
-
-    print(f'Number of elements in img_files_train: {len(img_files_train)}')
-    print(f'Number of elements in img_files_test: {len(img_files_test)}')
-
-    # check for duplicates
-    print(f'\nCheck duplicates in train/test set: {list(set(mask_files_train).intersection(mask_files_test))}\n')
-
-    return img_files_train, mask_files_train, img_files_test, mask_files_test, w_train_clss, w_test_clss
 
 class_dic = {
     'Normal': 0,
@@ -112,6 +14,76 @@ class_dic = {
     'Adenocarcinoma': 4,
     'Serrated adenoma': 5
 }
+
+classes = ['Normal', 'Polyp', 'Low-grade IN',
+           'High-grade IN', 'Adenocarcinoma', 'Serrated adenoma']
+
+
+""" Helper function used to get the number of elements per class in the dataset."""
+def get_num_elements_per_class(dataset_path, classes):
+    lengths = [len(os.listdir(os.path.join(dataset_path, c, "image"))) for c in classes]
+    return lengths
+
+""" Function used to generate a proportioned dataset: 80% training and 
+    20% test(validation) per each class. """
+def get_proportioned_dataset(dataset_path, classes, th, random_seed):
+    lengths = get_num_elements_per_class(dataset_path, classes)
+    print(f"\nNumber of elements per class: {lengths}")
+
+    # calculate number of elements for training and test sets
+    num_elements = sum(lengths)
+    num_train_elements = int(math.ceil(0.8 * num_elements))
+    num_test_elements = num_elements - num_train_elements
+    print(f"Number of elements in train set: {num_train_elements}")
+    print(f"Number of elements in test set: {num_test_elements}")
+
+    # calculate number of elements per class in training and test sets
+    train_lengths = [int(math.ceil(0.8 * l)) if l < th else int(0.8 * l) for l in lengths]
+    test_lengths = [l - t for l, t in zip(lengths, train_lengths)]
+    print(f"Number of elements per class in train set: {train_lengths}")
+    print(f"Number of elements per class in test set: {test_lengths}")
+
+    # generate train and test sets
+    random.seed(random_seed)
+    mask_files_train = []
+    img_files_train = []
+    mask_files_test = []
+    img_files_test = []
+
+    """ Idea of the following algorithm:
+        for each class:
+            1. Instantiate the class_elements list with all the paths of the images belonging 
+                to a specific class under analysis;
+            2. Randomly select (without repetition) 80% of paths from class_elements and put 
+                them in train_elements (with the corresponding label);
+            3. Using 'set' function to get the unselected item of class_elements and put them 
+                in test_set (with the corresponding label).
+    """
+    for i, c in enumerate(classes, 0):
+        # get list of all elements in class
+        class_elements = os.listdir(os.path.join(dataset_path, c, "image"))
+
+        # randomly select elements for train and test sets
+        train_elements = random.sample(class_elements, train_lengths[i])
+        test_elements = list(set(class_elements) - set(train_elements))
+
+        # add elements to train and test sets
+        # (os.path.join(dataset_path, c, "image", e), i) 
+        # = ('./data/EBHI-SEG/Normal\\image\\GT2016907-1-400-001.png', 0)
+        img_files_train += [(os.path.join(dataset_path, c, "image", e), i) for e in train_elements]
+        img_files_test += [(os.path.join(dataset_path, c, "image", e), i) for e in test_elements]
+
+    mask_files_train = [file[0].replace('image', 'label') for file in img_files_train]
+    mask_files_test = [file[0].replace('image', 'label') for file in img_files_test]
+
+    print(f'Number of elements in img_files_train: {len(img_files_train)}')
+    print(f'Number of elements in img_files_test: {len(img_files_test)}')
+
+    # # debug: check for duplicates
+    # print(f'\nCheck duplicates in train/test set: {list(set(mask_files_train).intersection(mask_files_test))}\n')
+
+    return img_files_train, mask_files_train, img_files_test, mask_files_test, train_lengths, test_lengths
+
 
 """ Custom class used to create the training and test sets. """
 class EBHIDataset(Dataset):
@@ -158,16 +130,14 @@ class EBHIDataset(Dataset):
 
     """ Method used to get (image, mask, label). """
     def __getitem__(self, index):
-        image = Image.open(self.image_paths[index])
+        # image_paths = tuple(path, label), target_paths = string(path)
+        image_path = self.image_paths[index][0]
+        label = self.image_paths[index][1]
+        image = Image.open(image_path)
         mask = Image.open(self.target_paths[index])
         x, y = self.transform(image, mask)
 
-        # getting class label contained in the path-name
-        res = [c for c in list(class_dic.keys())
-               if c in self.image_paths[index]]
-        l = class_dic[''.join(res)]
-
-        return x, y, l
+        return x, y, label
 
     def __len__(self):
         return len(self.image_paths)

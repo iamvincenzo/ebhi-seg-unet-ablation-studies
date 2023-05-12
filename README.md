@@ -25,7 +25,7 @@ The objective of this deep-learning task is to conduct ablation studies on the U
 
 - ablation_studies.py: This module is responsible for executing ablation studies based on sensitivity analysis and pruning of network modules.
 
-- results_analysis.py: This module (ad-hoc) is specifically created to obtain the best network configurations based on the analysis of statistics collected during training. Additionally, it allows for visualizing the results of ablation studies, based on the analysis of statistics collected during the execution of ablation studies.
+<!-- - results_analysis.py: This module (ad-hoc) is specifically created to obtain the best network configurations based on the analysis of statistics collected during training. Additionally, it allows for visualizing the results of ablation studies, based on the analysis of statistics collected during the execution of ablation studies.-->
 
 The results are contained within the "final_consideration.pdf" file.
 
@@ -50,7 +50,8 @@ Certainly! Here's an updated version of the table with additional details in the
 | opt                   | The optimizer used for training                             |
 | early_stopping        | The threshold for early stopping during training            |
 | resume_train          | Determines whether to load the model from a checkpoint      |
-| use_batch_norm        | Indicates whether to use 2 batch normalization layers in each conv layer |
+| use_batch_norm        | Indicates whether to use batch normalization layers in each conv layer |
+| use_double_batch_norm | Indicates whether to use 2 batch normalization layers in each conv layer |
 | use_inst_norm         | Indicates whether to use instance normalization layers in each conv layer |
 | use_double_inst_norm  | Indicates whether to use 2 instance normalization layers in each conv layer |
 | weights_init          | Determines whether to use weights initialization            |
@@ -58,7 +59,7 @@ Certainly! Here's an updated version of the table with additional details in the
 | dataset_path          | The path to save or retrieve the dataset                    |
 | checkpoint_path       | The path to save the trained model                          |
 | pretrained_net        | Indicates whether to load a pretrained model on BRAIN-MRI   |
-| arc_change_net        | Indicates whether to load an alternative model implementation |
+| arc_change_net        | Indicates whether to load a customizable model |
 | features              | A list of feature values (number of filters i.e., neurons in each layer)     |
 | norm_input            | Indicates whether to normalize the input data               |
 | apply_transformations | Indicates whether to apply transformations to images and corresponding masks |
@@ -77,10 +78,6 @@ Certainly! Here's an updated version of the table with additional details in the
 | num_iterations        | The number of iterations for the pruning process            |
 | weights_distr_histo   | Plots the histogram of weights distribution                 |
 | plt_weights_distr     | Plots the filters as images to visualize CNN kernels        |
-
-Please note that the details provided in the "Value Description" column are for guidance and may need to be customized based on the specific context and usage of the project.
-
-
 
 
 # Studi di ablazione dell'architettura di rete UNet addestrata sul dataset EBHI-Seg (ITA)
@@ -110,4 +107,4 @@ Il task di deep-learning in questione consiste nell'esecuzione di studi di ablaz
 
 - ablation_studies.py: è il modulo responsabile per l'esecuzione degli studi di ablazione basati sull'analisi di sensitività e il pruning dei moduli della rete.
 
-- results_analysis.py: è un modulo (ad-hoc) appositamente creato per ottenere le migliori configurazioni di rete basandosi sull'analisi delle statistiche raccolte durante il training. Inoltre, consente di visualizzare i risultati degli studi di ablazione, basandosi sempre sull'analisi delle statistiche raccolte durante l'esecuzione degli studi di ablazione.
+<!-- - results_analysis.py: è un modulo (ad-hoc) appositamente creato per ottenere le migliori configurazioni di rete basandosi sull'analisi delle statistiche raccolte durante il training. Inoltre, consente di visualizzare i risultati degli studi di ablazione, basandosi sempre sull'analisi delle statistiche raccolte durante l'esecuzione degli studi di ablazione. -->

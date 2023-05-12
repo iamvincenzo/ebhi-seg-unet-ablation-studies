@@ -4,11 +4,7 @@ import pandas as pd
 from matplotlib import cm
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
-from dataloader_utils import class_dic
-
-
-classes = ['Normal', 'Polyp', 'Low-grade IN',
-           'High-grade IN', 'Adenocarcinoma', 'Serrated adenoma']
+from dataloader_utils import class_dic, classes
 
 
 """ Helper function used to set some style configurations. """
@@ -40,8 +36,8 @@ def add_sample_hist(n_sample_list, task):
 
     return fig
 
-""" Helper function used to plot the gradients hist for 
-    each layer in the network and its values. """
+""" Helper function used to plot the gradients 
+    histogram for each layer in the network and its values. """
 def add_gradient_hist(net):
     ave_grads = []
     layers = []
@@ -70,8 +66,8 @@ def add_gradient_hist(net):
 
     return fig
 
-""" Helper function used to plot the performance of the model
-    for each class according to a specific metric. """
+""" Helper function used to plot the performance of 
+    the model for each class according to a specific metric. """
 def add_metric_hist(metr_list, metr):
     fig = plt.figure(figsize=(5, 5))
     plt.bar(np.arange(len(metr_list)), metr_list, lw=1, color='b')
@@ -97,22 +93,27 @@ def denorm(x):
     out = (x + 1) / 2
     return out.clamp_(0, 1)
 
-""" Helper function used to plot the image
-    of a dataset-sample. """
+""" Helper function used to 
+    plot the image of a dataset-sample. """
 def plot_samples(images, mask, labels, args):
     fig = plt.figure(figsize=(12, 12))
     rows, columns, j = 2, args.bs_train, 0
     for i in range(1, columns*rows + 1):
         fig.add_subplot(rows, columns, i)
+        # row-1 contains images
         if i <= args.bs_train:
             if args.norm_input:
                 plt.imshow((denorm((images[j].cpu())).numpy()).transpose(1, 2, 0))
             else:
-                plt.imshow((images[j].cpu().numpy()).transpose(1, 2, 0)) # from [3, 244, 244] to [244, 244, 3]
+                                                    # from [3, 244, 244] to [244, 244, 3]
+                plt.imshow((images[j].cpu().numpy()).transpose(1, 2, 0))
             plt.title(f'{list(class_dic.keys())[list(class_dic.values()).index(labels[j].item())]}') # class of the sample
+        # row-2 contains masks
         else:
             plt.imshow((mask[j].cpu().numpy()).transpose(1, 2, 0).squeeze(axis=2))
-
+        
+        # reinitialize the index used 
+        # to iterate over tensors (row=2)
         if j < args.bs_train:
             j += 1
         if j == args.bs_train:
@@ -122,8 +123,8 @@ def plot_samples(images, mask, labels, args):
 
     return fig
 
-""" Helper function used to plot the image
-    the mask and the model prediction. """
+""" Helper function used to plot the 
+    image, the mask and the model prediction. """
 def plot_check_results(img, mask, pred, label, args):
     fig = plt.figure(figsize=(12, 12))
     plt.subplot(1, 3, 1)
@@ -131,6 +132,7 @@ def plot_check_results(img, mask, pred, label, args):
         plt.imshow(np.squeeze((denorm(img.cpu())).numpy()).transpose(1, 2, 0))
     else:
         plt.imshow(np.squeeze(img.cpu().numpy()).transpose(1, 2, 0))
+                                  # inverse-search: from number (value) to label (key) 
     plt.title(f'Original Image - {list(class_dic.keys())[list(class_dic.values()).index(label.item())]}')
     plt.subplot(1, 3, 2)
     plt.imshow((mask.cpu().numpy()).transpose(1, 2, 0).squeeze(axis=2))
@@ -150,7 +152,6 @@ def kernels_viewer(model, wrt):
 
     for module_name, module in model.named_modules():
         if isinstance(module, torch.nn.Conv2d):
-
             kernels = module.weight.detach().clone().cpu()
 
             if kernels.shape[0] > 1:
@@ -159,17 +160,20 @@ def kernels_viewer(model, wrt):
                 title = module_name + ' ' + str(kernels.shape)
 
                 if j == 0:
-                    cast_dim = kernels.shape[0] # used to get only the first cast_dim filters
+                    # used to get only the first cast_dim filters
+                    cast_dim = kernels.shape[0] 
                     rows = 4
                     cols = kernels.shape[0] // rows
 
                 n, c, w, h = kernels.shape
 
-                # es. [32, 3, 3, 3] --> [96, 1, 3, 3] --> kernels[i].permute(1, 2, 0) --> img(3, 3, 1) = (w, h, c)
+                # es. [32, 3, 3, 3] --> [96, 1, 3, 3] 
+                # --> kernels[i].permute(1, 2, 0) --> img(3, 3, 1) = (w, h, c)
                 kernels = kernels.view(n*c, -1, w, h)
 
                 if kernels.shape[0] > cast_dim:
-                    kernels = kernels[:cast_dim] # [96, 1, 3, 3] --> [64, 1, 3, 3] (cast_dim=64)
+                    # [96, 1, 3, 3] --> [64, 1, 3, 3] (cast_dim=64)
+                    kernels = kernels[:cast_dim] 
 
                 # normalize to (0, 1) range so that matplotlib can plot them
                 kernels = kernels - kernels.min()
@@ -179,7 +183,8 @@ def kernels_viewer(model, wrt):
                 
                 for i in range(kernels.shape[0]):
                     plt.subplot(rows, cols, i + 1)
-                    plt.imshow(kernels[i].permute(1, 2, 0)) # change ordering since matplotlib requires images to be (H, W, C)
+                    # change ordering since matplotlib requires images to be (H, W, C)
+                    plt.imshow(kernels[i].permute(1, 2, 0)) 
                     plt.suptitle(title)
                     plt.axis('off')
 
@@ -188,9 +193,12 @@ def kernels_viewer(model, wrt):
                 wrt.add_figure('filter_img_grid_' + str(j), filter_img_fig)
                 j += 1
 
-# Use HOOKS
+# Use hooks: 
+# "hooks" are a mechanism that allows intercepting and recording 
+# activities within a neural network module during data processing
 conv_output = []
 
+""" Helper function used to visualize CNN activations. """
 def append_conv(module, input, output):
     # append all the conv layers and their respective wights to the list
     conv_output.append(output.detach().cpu()) 
@@ -201,6 +209,8 @@ def activations_viewer(net, wrt, img):
 
     for module_name, module in net.named_modules():
         if isinstance(module, torch.nn.Conv2d):
+            # hooks executed during the forward 
+            # pass of data through a neural network module
             module.register_forward_hook(append_conv)
 
     out = net(img)
@@ -225,7 +235,7 @@ def activations_viewer(net, wrt, img):
         wrt.add_figure('activations_img_grid_' + str(j), act_img_fig)
         j += 1
         
-""" Histogram of weights values. """
+""" Helper function used to plot histogram of weights values. """
 def plot_weights_distribution_histo(model, writer, bins = 100):
     for module_name, module in model.named_modules():
         if isinstance(module, torch.nn.Conv2d) and ('bias' not in module_name):
@@ -243,10 +253,7 @@ def plot_weights_distribution_histo(model, writer, bins = 100):
     writer.close()
 
 """ Helper function used to plot some metrics. """
-def bar_plotting(l0, l1, l2, metric):
-    index = ['Normal', 'Polyp', 'Low-grade IN', 
-             'High-grade IN', 'Adenocarcinoma', 'Serrated adenoma']
-    
+def bar_plotting(l0, l1, l2, metric):    
     if metric == 'acc_class_test_mean':
         k0, k1 = 'train_acc', 'abl_acc'
     elif metric == 'prec_class_test_mean':
@@ -254,7 +261,7 @@ def bar_plotting(l0, l1, l2, metric):
     elif metric == 'rec_class_test_mean':
         k0, k1 = 'train_rec', 'abl_rec'
 
-    df = pd.DataFrame({k0: l0, k1: l1, 'drop': l2}, index=index)
+    df = pd.DataFrame({k0: l0, k1: l1, 'drop': l2}, index=classes)
 
     cmap = cm.get_cmap('Set2') # Colour map (there are many others)
     ax = df.plot.bar(rot=0, cmap=cmap, edgecolor='None',  figsize=(12, 10))
@@ -265,10 +272,7 @@ def bar_plotting(l0, l1, l2, metric):
     return ax
 
 """ Helper function used to plot area graph. """
-def area_plotting(l0, l1, l2, metric, stckd=True, subplts=True):
-    index = ['Normal', 'Polyp', 'Low-grade IN', 
-             'High-grade IN', 'Adenocarcinoma', 'Serrated adenoma']
-    
+def area_plotting(l0, l1, l2, metric, stckd=True, subplts=True):    
     if metric == 'acc_class_test_mean':
         k0, k1 = 'train_acc', 'abl_acc'
     elif metric == 'prec_class_test_mean':
@@ -276,7 +280,7 @@ def area_plotting(l0, l1, l2, metric, stckd=True, subplts=True):
     elif metric == 'rec_class_test_mean':
         k0, k1 = 'train_rec', 'abl_rec'
 
-    df = pd.DataFrame({k0: l0, k1: l1, 'drop': l2}, index=index)
+    df = pd.DataFrame({k0: l0, k1: l1, 'drop': l2}, index=classes)
 
     cmap = cm.get_cmap('Set2') # Colour map (there are many others)
     ax = df.plot.area(stacked=stckd, cmap=cmap, subplots=subplts, figsize=(12, 10))
@@ -284,10 +288,7 @@ def area_plotting(l0, l1, l2, metric, stckd=True, subplts=True):
     return ax
 
 """ Helper function used to plot line graph. """
-def line_plotting(l0, l1, metric):
-    index = ['Normal', 'Polyp', 'Low-grade IN', 
-             'High-grade IN', 'Adenocarcinoma', 'Serrated adenoma']
-    
+def line_plotting(l0, l1, metric):    
     fig, axes = plt.subplots(2, 1)
 
     if metric == 'acc_class_test_mean':
@@ -297,14 +298,14 @@ def line_plotting(l0, l1, metric):
     elif metric == 'rec_class_test_mean':
         k0, k1 = 'train_rec', 'abl_rec'
 
-    df = pd.DataFrame({k0: l0, k1: l1}, index=index)
+    df = pd.DataFrame({k0: l0, k1: l1}, index=classes)
 
-    cmap = cm.get_cmap('Set2') # Colour map (there are many others)
+    # Colour map (there are many others)
+    cmap = cm.get_cmap('Set2') 
     df.plot.line(cmap=cmap, ax=axes[0], figsize=(12, 5))
 
     my_array = np.array([l0, l1])
-    df = pd.DataFrame(my_array, columns=['Normal', 'Polyp', 'Low-grade IN', 
-                                                 'High-grade IN', 'Adenocarcinoma', 'Serrated adenoma'])
+    df = pd.DataFrame(my_array, columns=classes)
     df.plot.line(cmap=cmap, ax=axes[1], figsize=(12, 10))
     
     return fig

@@ -1,24 +1,20 @@
-###################################################################################################################################
-# SOME REFERENCE: https://github.com/aladdinpersson/Machine-Learning-Collection/tree/master/ML/Pytorch/Basics/Imbalanced_classes #
-##################################################################################################################################
-
 from torch.utils.data import WeightedRandomSampler, DataLoader
 from dataloader_utils import get_proportioned_dataset, EBHIDataset
 
 
-""" Custom class that uses WeightedRandomSampler to sample 
-    from dataset such that the model sees approximately each
-    class the same number of times. """
+""" Custom class that uses WeightedRandomSampler to sample from dataset 
+    such that the model sees approximately each class the same number of times. """
 class BalanceDataset(object):
     """ Initialize configurations. """
-    def __init__(self, args, img_files_train, mask_files_train, w_train_clss):
+    def __init__(self, args, img_files_train, mask_files_train, train_lengths):
         self.args = args
         self.img_files_train = img_files_train
         self.mask_files_train = mask_files_train
-        self.w_train_clss = w_train_clss
+        # this field contains the number of elements in each class
+        self.train_lengths = train_lengths
 
-    """ Method used to generates a well balanced trainloader: the pairs (image, mask) selected 
-        for training are equal in number for the various classes. """
+    """ Method used to generates a well balanced trainloader: the pairs 
+        (image, mask) selected for training are equal in number for the various classes. """
     def get_loader(self):
         print(f'\nPerforming data balancing...\n')
         
@@ -27,7 +23,7 @@ class BalanceDataset(object):
         # # stesso metodo get_proportioned_dataset due volte. 
         # # Tuttavia, la riga di codice non viene rimossa poichè potrebbe essere utile per altri scopi
         # # futuri nel caso in cui BalanceDataset venga usata indipendentemente da get_proportioned_dataset prima.
-        # img_files_train, mask_files_train, _, _, w_train_clss, _ = get_proportioned_dataset(self.args)
+        # img_files_train, mask_files_train, _, _, train_lengths, _ = get_proportioned_dataset(self.args)
 
         # forcing dataset creation to apply transformation if not applied with data-augmentation
         if self.args.dataset_aug == 0:
@@ -38,14 +34,17 @@ class BalanceDataset(object):
             the class decreases, therefore the sampler considers more the 
             classes with a high weight value (small number of elements). """
         class_weights = []
-        for lenght in self.w_train_clss:
+        for lenght in self.train_lengths:
             class_weights.append(1/lenght)
 
         print(f'Class-weights: {class_weights}')
 
-        # initialize a list with "len(train_dataset)" zeros [0, ..., 0] 
+        # initialize a list with 'len(train_dataset)' zeros [0, ..., 0] 
         sample_weights = [0] * len(train_dataset)
 
+        # for each element in the 'train_set', the corresponding class 
+        # importance weight is associated in order. Therefore, when using the sampler, 
+        # 'shuffle' is set to False.
         for idx, (_, _, label) in enumerate(train_dataset):
             class_weight = class_weights[label]
             sample_weights[idx] = class_weight
@@ -55,6 +54,7 @@ class BalanceDataset(object):
             the number of samples to draw. """
         sampler = WeightedRandomSampler(sample_weights, num_samples=len(sample_weights), replacement=True)
 
+        # generating the train-loader using the defined sampler
         train_dataloader = DataLoader(train_dataset, batch_size=self.args.bs_train,
                                       num_workers=self.args.workers, sampler=sampler)
 

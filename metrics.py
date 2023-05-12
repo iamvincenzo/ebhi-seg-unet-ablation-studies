@@ -1,5 +1,10 @@
 import torch
-from torchmetrics.classification import BinaryAccuracy, BinaryJaccardIndex, BinaryPrecision, BinaryRecall, BinaryF1Score
+
+from torchmetrics.classification import BinaryRecall
+from torchmetrics.classification import BinaryF1Score
+from torchmetrics.classification import BinaryAccuracy
+from torchmetrics.classification import BinaryPrecision
+from torchmetrics.classification import BinaryJaccardIndex 
 
 """ Dice loss function. """
 def dc_loss(pred, target):

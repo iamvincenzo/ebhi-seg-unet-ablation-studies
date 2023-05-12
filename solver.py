@@ -1,19 +1,22 @@
 import os
 import json
 import torch
-import datetime
 import numpy as np
 from tqdm import tqdm
 import torch.nn as nn
 import torch.optim as optim
+from datetime import datetime
 import torchvision.transforms as T
 import torchvision.transforms.functional as TF
 
 from model import UNet
 from arc_change_net import UNET
 from ablation_studies import AblationStudies
-from metrics import dc_loss, jac_loss, custom_loss, binary_jac, binary_acc, binary_prec, binary_rec, binary_f1s
-from plotting_utils import set_default, add_gradient_hist, add_metric_hist, plot_check_results, kernels_viewer, activations_viewer, plot_weights_distribution_histo
+from metrics import dc_loss, jac_loss, custom_loss, binary_jac
+from metrics import binary_acc, binary_prec, binary_rec, binary_f1s
+from plotting_utils import plot_weights_distribution_histo
+from plotting_utils import set_default, add_gradient_hist, add_metric_hist 
+from plotting_utils import plot_check_results, kernels_viewer, activations_viewer
 
 
 """ Solver for training and testing. """
@@ -21,43 +24,47 @@ class Solver(object):
     """ Initialize configurations. """
     def __init__(self, train_loader, test_loader, device, writer, args):
         self.args = args
-        self.model_name = 'ebhi_seg_{}.pth'.format(self.args.model_name)
+        self.model_name = f'ebhi_seg_{self.args.model_name}.pth'
 
+        # model selection
         if self.args.pretrained_net == True:
             model = torch.hub.load('mateuszbuda/brain-segmentation-pytorch', 'unet',
                                    in_channels=3, out_channels=1, init_features=32, pretrained=True)
             print(f'\nPretrained model implementation selected:\n\n {model}')
         elif self.args.arc_change_net == True:
             model = UNET(self.args, 3, 1, [int(f) for f in self.args.features])
-            print(f'\nOnline model implementation selected:\n\n {model}')
+            print(f'\nCustomizzable model implementation selected:\n\n {model}')
         else:
             model = UNet(self.args)
             print(f'\nStandard model implementation selected:\n\n {model}')
 
-        # define the model
+        # model definition
         self.net = model.to(device)
 
-        # load a pretrained model
-        if (self.args.resume_train == True or self.args.global_ablation == True 
-            or self.args.selective_ablation == True or self.args.all_one_by_one == True):
+        # load a pretrained model for 
+        # resuming training or to execute ablation studies
+        if (self.args.resume_train == True or 
+            self.args.global_ablation == True or 
+            self.args.selective_ablation == True or 
+            self.args.all_one_by_one == True):
             self.load_model(device)
 
-        # define Loss function
+        # loss function definition
         if self.args.loss == 'dc_loss':
             self.criterion = dc_loss
-            print(f'\nDC_loss selected!\n')
+            print(f'\nDC_loss selected...')
         elif self.args.loss == 'jac_loss':
             self.criterion = jac_loss
-            print(f'\nJAC_loss selected!\n')
+            print(f'\nJAC_loss selected...')
         elif (self.args.loss == 'bcewl_loss' 
               and self.args.arc_change_net == True):
             self.criterion = nn.BCEWithLogitsLoss()
-            print(f'\nBCEWithLogitsLoss selected!\n')
+            print(f'\nBCEWithLogitsLoss selected...')
         elif self.args.loss == 'custom_loss':
             self.criterion = custom_loss
-            print(f'\ncustom_loss selected!\n')
+            print(f'\ncustom_loss selected...')
 
-        # choose optimizer
+        # optimizer definition
         if self.args.opt == "SGD":
             self.optimizer = optim.SGD(self.net.parameters(), 
                                        lr=self.args.lr, momentum=0.9)
@@ -65,13 +72,14 @@ class Solver(object):
             self.optimizer = optim.Adam(self.net.parameters(), 
                                         lr=self.args.lr, betas=(0.9, 0.999))
 
+        # other training/validation parameters
         self.epochs = self.args.epochs
         self.train_loader = train_loader
         self.test_loader = test_loader
         self.device = device
         self.writer = writer
 
-        # visualize the model we built on tensorboard
+        # visualize the model built on TensorBoard
         images, _, _ = next(iter(self.train_loader))
         self.writer.add_graph(self.net, images.to(self.device))
         self.writer.close()
@@ -81,29 +89,33 @@ class Solver(object):
 
     """ Method used to save the model. """
     def save_model(self):
-        # if you want to save the model
         check_path = os.path.join(self.args.checkpoint_path, self.model_name)
         torch.save(self.net.state_dict(), check_path)
-        print('\nModel saved!\n')
+        print('\nModel saved...\n')
 
     """ Method used to load the model. """
     def load_model(self, device):
-        # function to load the model
         check_path = os.path.join(self.args.checkpoint_path, self.model_name)
         self.net.load_state_dict(torch.load(check_path, 
                                             map_location=torch.device(device)))
-        print('\nModel loaded!\n')
+        print('\nModel loaded...\n')
 
     """ Method used to save collected training-statistics. """
     def save_json(self, file):
         with open('./statistics/my_dic_train_results_' + self.args.model_name + 
-                  '_' + datetime.datetime.now().strftime('%d%m%Y-%H%M%S') + '.json', 'w') as f:
+                  '_' + f'{datetime.now():%d%m%Y-%H%M%S}' + '.json', 'w') as f:
             json.dump(file, f)
 
     """ Method used to binarize a tensor (mask)
-        in order to compute binary accuracy, precision, recall, f1-score. """
+        in order to compute binary accuracy, precision, recall, f1-score. 
+        The convert('1') function creates a thresholded image where all pixels with values 
+        less than 128 are set to 0, and all pixels with values greater than or equal to 128 
+        are set to 1. """
     def binarization_tensor(self, mask, pred):
         transform = T.ToPILImage()
+        # np.squeeze(mask) 
+        # --> [1, 3, 224, 224] --> [3, 224, 224]
+        # convert: 
         binary_mask = transform(np.squeeze(mask)).convert('1')
         binary_pred = transform(np.squeeze(pred)).convert('1')
         maskf = TF.to_tensor(binary_mask).view(-1)
@@ -115,71 +127,83 @@ class Solver(object):
     def train(self):
         print('\nStarting training...\n')
 
-        # keep track of average training and test losses for each epoch
+        # keep track of average training loss
         avg_train_losses = []
+        # keep track of average test(validation) loss
         avg_test_losses = []
+        # keep track training performance for use in ablation studies
         my_dic_train_results = {}
 
         # trigger for earlystopping
         earlystopping = False
 
+        # put the model in training mode
         self.net.train()
 
-        for epoch in range(self.epochs):  # loop over the dataset multiple times
-            # record the training and test losses for each batch in this epoch
+        # loop over the dataset multiple times
+        for epoch in range(self.epochs):  
+            # record the training and test
+            # losses for each batch in this epoch
             train_losses = []
             test_losses = []
 
-            loop = tqdm(enumerate(self.train_loader),
+            # used for creating a terminal progress bar
+            loop = tqdm(enumerate(self.train_loader), 
                         total=len(self.train_loader), leave=False)
 
+            # loop over training data
             for batch, (images, targets, _) in loop:
+                # put data on correct device
                 images = images.to(self.device)
                 targets = targets.to(self.device)
 
-                # zero the parameter gradients
+                # clear the gradients of all optimized variables
                 self.optimizer.zero_grad()
 
-                # forward + backward + optimize
+                # forward pass: compute predicted outputs by passing inputs to the model
                 pred = self.net(images)
                 
+                # calculate the loss
                 if self.args.loss == 'custom_loss':
                     loss = self.criterion(pred, targets, self.args.val_custom_loss)
                 else:
                     loss = self.criterion(pred, targets)
 
+                # backward pass: compute gradient 
+                # of the loss with respect to model parameters
                 loss.backward()
 
                 if (batch % self.args.print_every == self.args.print_every - 1) or (batch == 0 and epoch == 0):
                     self.writer.add_figure('gradients_ebhi-seg', 
                                            add_gradient_hist(self.net), global_step=epoch * len(self.train_loader) + batch)
-
+                
+                # perform a single optimization step (parameter update)
                 self.optimizer.step()
 
+                # record training loss
                 train_losses.append(loss.item())
 
-                # used to check model improvement
+                # used to check model improvements during the training
                 self.check_results(batch, epoch)
 
                 if batch % self.args.print_every == self.args.print_every - 1 or (batch == 0 and epoch == 0):
-                    # save at the each (print_every - 1)
+                    # save the model at the each (print_every - 1)
                     self.save_model()  
 
-                    # Test model
+                    # validate the model at the each (print_every - 1)
                     if self.args.bs_test == 1:
-                        dc_class_test, jac_cust_class_test, jac_class_test, acc_class_test, prec_class_test, rec_class_test, f1s_class_test = self.test(test_losses)
+                        (dc_class_test, jac_cust_class_test, jac_class_test, acc_class_test, 
+                         prec_class_test, rec_class_test, f1s_class_test) = self.test(test_losses)
                     else:
                         self.test(test_losses)
 
+                    # calculate average loss 
+                    # (over a bacth because bs_train=4 and print_every=445)
                     batch_avg_train_loss = np.average(train_losses)
                     batch_avg_test_loss = np.average(test_losses)
 
                     avg_train_losses.append(batch_avg_train_loss)
                     avg_test_losses.append(batch_avg_test_loss)
-
-                    # general dc in train/test
-                    batch_avg_train_dc = np.average([1 - x for x in train_losses])
-                    batch_avg_test_dc = np.average([1 - x for x in test_losses])
 
                     print(f'\ntrain_loss: {batch_avg_train_loss:.5f} '
                           f'valid_loss: {batch_avg_test_loss:.5f}\n')
@@ -188,19 +212,26 @@ class Solver(object):
                                            global_step=epoch * len(self.train_loader) + batch)
                     self.writer.add_scalar('batch_avg_test_loss', batch_avg_test_loss,
                                            global_step=epoch * len(self.train_loader) + batch)
-
+                    
+                    """ # general dc in train/test
+                    batch_avg_train_dc = np.average([1 - x for x in train_losses])
+                    batch_avg_test_dc = np.average([1 - x for x in test_losses])
                     self.writer.add_scalar('batch_avg_train_dc', batch_avg_train_dc,
                                            global_step=epoch * len(self.train_loader) + batch)
                     self.writer.add_scalar('batch_avg_test_dc', batch_avg_test_dc,
-                                           global_step=epoch * len(self.train_loader) + batch)
+                                           global_step=epoch * len(self.train_loader) + batch) """
                     
-                    """ Saving some data in a dictionary (1). """                    
+                    # saving some data in a dictionary (1):
+                    # results are overwritten after each iteration since only the final 
+                    # performance of the model is required for comparison between the ablated 
+                    # and non-ablated models in the context of ablation studies                    
                     my_dic_train_results['epoch'] = str(epoch)
                     my_dic_train_results['global-step'] = str(epoch * len(self.train_loader) + batch)
                     my_dic_train_results['avg_train_losses'] = [str(x) for x in avg_train_losses]
                     my_dic_train_results['avg_test_losses'] = [str(x) for x in avg_test_losses]
                     
                     if self.args.bs_test == 1:
+                        # computation of the corresponding average metric for each class
                         print(f'Dice for class {[np.average(x) for x in dc_class_test]}')
                         print(f'Jaccard index custom for class {[np.average(x) for x in jac_cust_class_test]}')
                         print(f'Binary Jaccard index for class {[np.average(x) for x in jac_class_test]}')
@@ -217,7 +248,7 @@ class Solver(object):
                         self.writer.add_figure('recall_histo', add_metric_hist([np.average(x) for x in rec_class_test], 'Recall'), 
                                                global_step=epoch * len(self.train_loader) + batch)
                         
-                        """ Saving some data in a dictionary (2). """                    
+                        # saving some data in a dictionary (2)                 
                         my_dic_train_results['dc_class_test_mean'] = [str(np.average(x)) for x in dc_class_test]
                         my_dic_train_results['jac_cust_class_test_mean'] = [str(np.average(x)) for x in jac_cust_class_test]
                         my_dic_train_results['jac_class_test_mean'] = [str(np.average(x)) for x in jac_class_test]
@@ -228,10 +259,11 @@ class Solver(object):
 
                     print(f'\nGloabl-step: {epoch * len(self.train_loader) + batch}')
 
+                    # clear statistics
                     train_losses = []
                     test_losses = []
 
-                    # Early stopping with a patience of 1 and a minimum of N epochs
+                    # early stopping with a patience of 1 and a minimum of N epochs
                     if epoch > self.args.early_stopping:  
                         if avg_test_losses[-1] >= avg_test_losses[-2]:
                             print('\nEarly Stopping Triggered With Patience 1')
@@ -244,26 +276,31 @@ class Solver(object):
             if earlystopping:
                 break
 
-            # save at the end of each epoch only if earlystopping = False
+            # save at the end of each 
+            # epoch only if earlystopping = False
             self.save_model()  
 
-        # final analyses (at the end of the training process)
+        # final analyses: kernel and activations
+        # (at the end of the training process)
         self.kernel_analisys()           
         self.activation_analisys()
 
+        # write all remaining data in the buffer
         self.writer.flush()
+        # free up system resources used by the writer
         self.writer.close()
-        print('Finished Training!\n')
 
-        """ Saving collected results in a file. """
+        # saving collected results in a json file
         self.save_json(my_dic_train_results)
+
+        print('Training finished...\n')
 
     """ Method used to evaluate the model on the test set. """
     def test(self, test_losses):
         # put net into evaluation mode
         self.net.eval()  
 
-        # since we're not training, we don't need to calculate the gradients for our outputs
+        # no need to calculate the gradients for outputs
         with torch.no_grad():
             # compute some metrics performance for each class on the test set
             if self.args.bs_test == 1:
@@ -275,6 +312,7 @@ class Solver(object):
                 rec_class_test = list([[], [], [], [], [], []])
                 f1s_class_test = list([[], [], [], [], [], []])
 
+            # used for creating a terminal progress bar
             test_loop = tqdm(enumerate(self.test_loader),
                              total=len(self.test_loader), leave=False)
 
@@ -331,13 +369,13 @@ class Solver(object):
     """ Method used to visualize CNN kernels. """
     def kernel_analisys(self):
         print('\nPerforming kernel analysis...\n')
-
         kernels_viewer(self.net, self.writer)
 
     """ Method used to visualize CNN activations. """
     def activation_analisys(self):
         print(f'\nPerforming kernel activations analysis...\n')
-
+        # returns the next batch of data 
+        # from the dataloader "self.test_loader"
         (img, _, _) = next(iter(self.test_loader))
         img = img.to(self.device)
 
@@ -364,7 +402,8 @@ class Solver(object):
     """ Method used to run the comparison between 
         weights of the model before and after training. """
     def weights_pre_after_train_analysis(self):
-        print('\nPerforming weights analysis pre-training vs. after training to quantify neural network parameter changes...\n')
+        print(f'\nPerforming weights analysis pre-training vs. after '
+              f'training to quantify neural network parameter changes...\n')
 
         model1_path = self.args.checkpoint_path + '/ebhi_seg_{}.pth'.format(self.args.model_name) 
         model2_path = self.args.checkpoint_path + '/' + self.args.model_name + '_before_training.pth'
@@ -385,8 +424,10 @@ class Solver(object):
             self.net1 = UNet(self.args)
             self.net2 = UNet(self.args)
             
-        self.net1.load_state_dict(torch.load(model1_path, map_location=torch.device(self.device)))
-        self.net2.load_state_dict(torch.load(model2_path, map_location=torch.device(self.device)))
+        self.net1.load_state_dict(torch.load(model1_path, 
+                                             map_location=torch.device(self.device)))
+        self.net2.load_state_dict(torch.load(model2_path, 
+                                             map_location=torch.device(self.device)))
         
         mod_name_list = []
         
@@ -394,30 +435,7 @@ class Solver(object):
             if ((isinstance(module1, torch.nn.Conv2d) and ('bias' not in module_name1) 
                 and isinstance(module2, torch.nn.Conv2d) and ('bias' not in module_name2)) or
                 (isinstance(module1, torch.nn.Linear) and ('bias' not in module_name1) 
-                and isinstance(module2, torch.nn.Linear) and ('bias' not in module_name2))):  
-
-                """ Plotting weights:
-                tensor1 = module1.weight.detach()
-                tensor2 = module2.weight.detach()
-
-                if tensor1.shape[0] > 64:
-                    tensor1 = tensor1[:64]
-
-                if tensor2.shape[0] > 64:
-                    tensor2 = tensor2[:64]
-                
-                tensor1 = tensor1 - tensor1.min()
-                tensor1 = tensor1 / tensor1.max()
-
-                tensor2 = tensor2 - tensor2.min()
-                tensor2 = tensor2 / tensor2.max()
-                
-                tensor1 = tensor1.numpy()
-                tensor2 = tensor2.numpy()
-                
-                self.plot_kernels(tensor1)
-                self.plot_kernels(tensor2)
-                """
+                and isinstance(module2, torch.nn.Linear) and ('bias' not in module_name2))):              
                 
                 # distance = self.get_tensor_distance(module1, module2)
                 distance = self.quantify_change_nn_parameters(module1.weight.detach(), 
@@ -427,41 +445,48 @@ class Solver(object):
                 print(f'Distance between "{module_name1}" and "{module_name2}": {distance:.2f}')
 
         if self.args.single_mod == True or self.args.double_mod == True:
+            # sort modules in descending order 
+            # (related to variations during training-process)
             mod_name_list.sort(key=lambda tup: tup[1], reverse=True)
 
         mod_list = [t[0] for t in mod_name_list]
 
         return mod_list
         
-    """ Method used to start some ablation studies. """
+    """ Method used to start ablation studies. """
     def start_ablation_study(self):
         print('\nStarting ablation studies...\n')
 
-        ablationNn = AblationStudies(self.args, self.model_name, self.train_loader, 
-                                     self.test_loader, self.net, self.criterion, self.device, self.writer)
-        
-        # select the first or first two tensors with major-changing
+        ablationNn = AblationStudies(self.args, self.model_name, 
+                                     self.train_loader, self.test_loader, 
+                                     self.net, self.criterion, self.device, self.writer)
+                
+        # automatic modules-selection
         mod_name_list = self.weights_pre_after_train_analysis()
 
+        # ablation study on the first or first two modules subjected-to 
+        # more variations during training process (single_mode vs. double_mod)
         if self.args.single_mod == True:
             mod_name_list[:] = mod_name_list[0:1]
         elif self.args.double_mod == True:
             mod_name_list[:] = mod_name_list[0:2]
-        
+        # ablation study over all-modules of the model
         if self.args.global_ablation == True and self.args.grouped_pruning == True:
-            ablationNn.iterative_pruning(True)
-
+            ablationNn.iterative_pruning(grouped_pruning=True)
         elif self.args.global_ablation == True:
-            ablationNn.iterative_pruning()
-
+            ablationNn.iterative_pruning(grouped_pruning=False)
+        # ablation study on all modules in mod_name_list
         elif self.args.selective_ablation == True:
+            # # manual modules-selection
+            # mod_name_list = ['downs.0.conv.0', 'ups.3.conv.2']
             ablationNn.selective_pruning(mod_name_list)
-            
+        # ablation study on all modules, but after each module 
+        # the model is reloaded to evaluate the impact of pruning 
+        # on each module independently from other modules
         elif self.args.all_one_by_one == True:
             for mod in mod_name_list:
                 ablationNn.selective_pruning([mod])
-
-                # re-loading model after each unit-ablation study (network passed as reference)
+                # reloading model after each unit-ablation study (network passed as reference)
                 self.load_model(self.device)
                 ablationNn = AblationStudies(self.args, self.model_name, self.train_loader, self.test_loader, 
                                              self.net, self.criterion, self.device, self.writer)

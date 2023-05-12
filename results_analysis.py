@@ -24,7 +24,7 @@ def get_args():
 
     # best-configuration
     ###################################################################
-    parser.add_argument('--get_best_net_config', action='store_true', # default=True,
+    parser.add_argument('--get_best_net_config', action='store_true', default=True,
                         help='get the best network configuration')
     parser.add_argument('--num_conf_per_it', type=int, default=3,
                         help='number of json files per run')
@@ -34,7 +34,7 @@ def get_args():
         
     # ablation
     ###################################################################
-    parser.add_argument('--compare_ablation_results', action='store_true', default=True,
+    parser.add_argument('--compare_ablation_results', action='store_true', # default=True,
                         help='compare ablation results')    
     parser.add_argument('--abl_statistics_path', type=str,
                         default='./abl_statistics', help='path were to get model statistics')
@@ -61,29 +61,38 @@ def get_best_net_config(args):
     N = args.num_conf_per_it 
     idx = 0
     mean_test_losses = []
+    mean_test_dcs = []
+    mean_test_jacs = []
     mean_test_accs = []
     mean_test_precs = []
     mean_test_recs = []
 
+    # calcolo delle prestazioni medie dei len(files)/N esperimenti differenti
     for i in range(0, len(files), N):
+        np_array_dcs_list = []
+        np_array_jacs_list = []
         np_array_accs_list = []
         np_array_precs_list = []
         np_array_recs_list = []
         sum_train = 0.0
         sum_test = 0.0
 
+        # per ogni simulazione relativa allo stesso esperimento
         for j in range(N):
             with open(files[i + j]) as f:
                 my_dict = json.load(f)
                 my_dict['name'] = files[i + j]
 
-                # statistics calculation: test_loss & train_loss
+                # statistics calculation: test_loss & train_loss:
+                # so considerano solo gli utlimi valori assunti dall loss
+                # in training e testing
                 sum_train += float(my_dict['avg_train_losses'][-1])
                 sum_test += float(my_dict['avg_test_losses'][-1])
 
                 # statistics calculation: accuracy
                 l0 = np.array(my_dict['acc_class_test_mean'])
                 l0 = l0.astype(np.float32)
+                # [np.([..., .., ...]),  ..., N]
                 np_array_accs_list.append(l0)
 
                 # statistics calculation: precision
@@ -96,13 +105,27 @@ def get_best_net_config(args):
                 l2 = l2.astype(np.float32)
                 np_array_recs_list.append(l2)
 
-        """ The name is only representative: at the end you have to choose between 
-            configurations with the same name with the appropriate random seed. """
+                # statistics calculation: dice
+                l3 = np.array(my_dict['dc_class_test_mean'])
+                l3 = l3.astype(np.float32)
+                np_array_dcs_list.append(l3)
+
+                # statistics calculation: iou
+                l4 = np.array(my_dict['jac_class_test_mean'])
+                l4 = l4.astype(np.float32)
+                np_array_jacs_list.append(l4)
+
+        """ The name is only representative: at the end you have to choose 
+            between configurations with the same name with the appropriate random seed. """
+        # best configuration related to the capability 
+        # of generalization of the model (validation-loss/train-loss)
         mean_test_losses.append((my_dict['name'], sum_test/N, sum_train/N, idx))
 
         """ The final per-class-accuracy is computed as the element-wise-mean 
             of N list (corresponding to the N configurations) of per-class-accuracy. 
-            Same operation for the per-class-precision and per-class-recall. """ 
+            Same operation for the per-class-precision and per-class-recall. """
+        mean_test_dcs.append(np.mean(np_array_dcs_list, axis=0))
+        mean_test_jacs.append(np.mean(np_array_jacs_list, axis=0))
         mean_test_accs.append(np.mean(np_array_accs_list, axis=0))
         mean_test_precs.append(np.mean(np_array_precs_list, axis=0))
         mean_test_recs.append(np.mean(np_array_recs_list, axis=0))
@@ -123,7 +146,7 @@ def get_best_net_config(args):
         of accuracy, precision and recall. """
     mean_test_losses.sort(key=lambda tup: tup[1])
 
-    return mean_test_losses, mean_test_accs, mean_test_precs, mean_test_recs
+    return mean_test_losses, mean_test_dcs, mean_test_jacs, mean_test_accs, mean_test_precs, mean_test_recs
 
 """ Helper function used to compare ablation results. """
 def compare_ablation_results(args):
@@ -131,13 +154,13 @@ def compare_ablation_results(args):
     
     path = args.abl_statistics_path + '/*.json'
     files = get_files_name(path)
-    abl_files = [f for f in files if 'ablation' in f] # and args.model_name in f]
+    abl_files = [f for f in files if 'ablation' in f]
     train_file = [f for f in files if 'ablation' not in f and args.model_name in f]
 
     my_dict_train = {}
     my_dict_abl = {}
 
-    # Training collected results
+    # training collected results
     with open(train_file[0]) as f:
         my_dict_train = json.load(f)
 
@@ -258,10 +281,13 @@ def compare_ablation_results(args):
 """ Helper function used to run the simulation. """
 def main(args):
     if args.get_best_net_config == True:
-        mean_test_losses, mean_test_accs, mean_test_precs, mean_test_recs = get_best_net_config(args)
+        (mean_test_losses, mean_test_dcs, mean_test_jacs, 
+         mean_test_accs, mean_test_precs, mean_test_recs) = get_best_net_config(args)
         for idx, val in enumerate(mean_test_losses):
             print(f'\n{idx+1}) Configuration: {val[0]}, \n'
                   f'mean-test-loss: {val[1]:.4f}, mean-train-loss: {val[2]:.4f}, abs-diff: {np.abs(val[1] - val[2]):.4f} \n'
+                  f'mean-test per-class-dice: {mean_test_dcs[val[3]]}, total: {np.mean(mean_test_dcs[val[3]]):.4f} \n'
+                  f'mean-test per-class-iou: {mean_test_jacs[val[3]]}, total: {np.mean(mean_test_jacs[val[3]]):.4f} \n'
                   f'mean-test per-class-accuracy: {mean_test_accs[val[3]]}, total: {np.mean(mean_test_accs[val[3]]):.4f} \n'
                   f'mean-test per-class-precision: {mean_test_precs[val[3]]}, total: {np.mean(mean_test_precs[val[3]]):.4f} \n'
                   f'mean-test per-class-recall: {mean_test_recs[val[3]]}, total: {np.mean(mean_test_recs[val[3]]):.4f}\n')

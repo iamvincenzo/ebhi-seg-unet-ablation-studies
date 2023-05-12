@@ -1,21 +1,19 @@
-#######################################################################################################################################
-# https://github.com/aladdinpersson/Machine-Learning-Collection/tree/master/ML/Pytorch/image_segmentation/semantic_segmentation_unet #
-######################################################################################################################################
+#########################################
+# https://arxiv.org/pdf/1505.04597.pdf #
+########################################
 
 import os
 import torch
 import torch.nn as nn
 
-""" Class for double-convolution model.  """
+""" Class for double-convolution model used inside UNet architecture.
+    Specifically, the implemented UNet network architecture utilizes padded 
+    convolution, therefore the padding of the double-layer convolutions is set to 1. """
 class DoubleConv(nn.Module):
     """ Initialize configurations. """
     def __init__(self, args, input_channels, output_channels):
         super(DoubleConv, self).__init__()
-
-        #######################################################################################################
-        # https://datascience.stackexchange.com/questions/46407/conv-bias-or-not-with-instance-normalization #
-        ######################################################################################################
-
+        # different possible configuration of double-conv block
         if args.use_batch_norm == True:
             self.conv = nn.Sequential(
                 nn.Conv2d(input_channels, output_channels,
@@ -26,7 +24,6 @@ class DoubleConv(nn.Module):
                 nn.BatchNorm2d(output_channels),
                 nn.ReLU(inplace=True)
             )
-
         elif args.use_double_batch_norm == True:
             self.conv = nn.Sequential(
                 nn.Conv2d(input_channels, output_channels,
@@ -38,7 +35,13 @@ class DoubleConv(nn.Module):
                 nn.BatchNorm2d(output_channels),
                 nn.ReLU(inplace=True)
             )
-
+        #######################################################################################################
+        # https://datascience.stackexchange.com/questions/46407/conv-bias-or-not-with-instance-normalization #
+        ######################################################################################################
+            """ In general, instance normalization does not require a 
+                bias term because it already shifts the distribution of 
+                the activations to have zero mean and unit variance. Therefore, 
+                adding a bias term may not be necessary and could lead to overfitting. """
         elif args.use_inst_norm == True:
             self.conv = nn.Sequential(
                 nn.Conv2d(input_channels, output_channels,
@@ -49,7 +52,6 @@ class DoubleConv(nn.Module):
                 nn.InstanceNorm2d(output_channels, affine=True),
                 nn.ReLU(inplace=True)
             )
-
         elif args.use_double_inst_norm == True:
             self.conv = nn.Sequential(
                 nn.Conv2d(input_channels, output_channels,
@@ -61,7 +63,6 @@ class DoubleConv(nn.Module):
                 nn.InstanceNorm2d(output_channels, affine=True),
                 nn.ReLU(inplace=True)
             )
-
         else:
             self.conv = nn.Sequential(
                 nn.Conv2d(input_channels, output_channels,
@@ -72,28 +73,33 @@ class DoubleConv(nn.Module):
                 nn.ReLU(inplace=True)
             )
 
-    """ Method used to get the convolutional layer. """
+    """ Method used to define the computations needed to create 
+        the output of the double-convolution module given its input. """
     def forward(self, x):
         return self.conv(x)
 
 
-""" Class for customizable UNet architecture. """
+""" Class for customizable UNet architecture: that allows for 
+    choosing between different types of normalization (Batch or Instance), 
+    as well as the U-depth and the number of filters (neurons) in each layer."""
 class UNET(nn.Module):
     """ Initialize configurations. """
     def __init__(self, args, in_channels=3, out_channels=1, features=[64, 128, 256, 512]):
         super(UNET, self).__init__()
+        # contracting-path
         self.downs = nn.ModuleList()
+        # expanding-path
         self.ups = nn.ModuleList()
         self.pool = nn.MaxPool2d(kernel_size=2, stride=2)
 
         self.args = args
 
-        # down part of UNET
+        # down-part of UNET
         for feature in features:
             self.downs.append(DoubleConv(self.args, in_channels, feature))
             in_channels = feature
 
-        # up part of UNET
+        # up-part of UNET
         for feature in reversed(features):
             self.ups.append(
                 nn.ConvTranspose2d(
@@ -112,11 +118,12 @@ class UNET(nn.Module):
         if self.args.weights_init == True:
             self.initialize_weights()
 
-        # saving the model before the training process
+        # save the model before the training process      
+        # the saved weights can be used to check the difference between the model before and after training
         self.save_initial_weights_distribution()
 
-    """ Method used to define the computations needed to create the 
-        output of the neural network given its input. """
+    """ Method used to define the computations needed to 
+        create the output of the neural network given its input. """
     def forward(self, x):
         skip_connections = []
 
@@ -126,18 +133,28 @@ class UNET(nn.Module):
             x = self.pool(x)
 
         x = self.bottleneck(x)
+
+        # reverses the order of elements in the skip_connections
+        # starting from the bottom, the first skip connection to be merged will be the last one that was added.
         skip_connections = skip_connections[::-1]
 
+        # step of 2 because ups contains both ConvTranspose2d and Conv2d modules 
+        # (which are at indices 1, 3, ...)
         for idx in range(0, len(self.ups), 2):
+            # ConvTranspose2d
             x = self.ups[idx](x)
+            # len(skip_connections) = len(self.ups)/2
             skip_connection = skip_connections[idx//2]
 
             concat_skip = torch.cat((skip_connection, x), dim=1)
+
+            # Conv2d
             x = self.ups[idx + 1](concat_skip)
 
         x = self.final_conv(x)
 
-        # remember: arc_change_net can work both 
+        # remember: 
+        # arc_change_net can work both 
         # with bcewl_loss and dc_loss/jac_loss
         if self.args.loss != 'bcewl_loss':
             x = self.output_activation(x)
@@ -153,23 +170,24 @@ class UNET(nn.Module):
                 nn.init.kaiming_uniform_(m.weight)
                 if m.bias is not None:
                     nn.init.constant_(m.bias, 0)
-
             elif isinstance(m, nn.BatchNorm2d):
                 nn.init.constant_(m.weight, 1)
                 nn.init.constant_(m.bias, 0)
-
             elif isinstance(m, nn.InstanceNorm2d):
                 nn.init.constant_(m.weight, 1)
                 nn.init.constant_(m.bias, 0)
-
             elif isinstance(m, nn.Linear):
                 nn.init.kaiming_uniform_(m.weight)
                 nn.init.constant_(m.bias, 0)
 
     """ Helper method used to save some data used in ablation studies. """
     def save_initial_weights_distribution(self):
-        if (not(self.args.global_ablation) and not(self.args.selective_ablation) and 
-            not(self.args.all_one_by_one)):        
-            check_path = os.path.join(self.args.checkpoint_path, self.args.model_name + '_before_training.pth')
+        if (not(self.args.global_ablation) and 
+            not(self.args.selective_ablation) and 
+            not(self.args.all_one_by_one)):  
+
+            check_path = os.path.join(self.args.checkpoint_path, 
+                                      self.args.model_name + '_before_training.pth')
             torch.save(self.state_dict(), check_path)
-            print('\nModel saved (before training)!\n')
+            
+            print('\nModel saved (before training)...\n')
