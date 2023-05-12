@@ -27,7 +27,7 @@ The objective of this deep-learning task is to conduct ablation studies on the U
 
 <!-- - results_analysis.py: This module (ad-hoc) is specifically created to obtain the best network configurations based on the analysis of statistics collected during training. Additionally, it allows for visualizing the results of ablation studies, based on the analysis of statistics collected during the execution of ablation studies.-->
 
-The results are contained within the "final_consideration.pdf" file.
+The **results** are contained within the "final_considerations.pdf" file.
 
 **The dataset can be downloaded at:** https://paperswithcode.com/dataset/ebhi-seg
 
