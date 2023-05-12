@@ -29,9 +29,9 @@ The objective of this deep-learning task is to conduct ablation studies on the U
 
 The results are contained within the "final_consideration.pdf" file.
 
-The dataset can be downloaded at: https://paperswithcode.com/dataset/ebhi-seg
+**The dataset can be downloaded at:** https://paperswithcode.com/dataset/ebhi-seg
 
-Other interesting resources:
+**Other interesting resources:**
 
 - **U-Net: Convolutional Networks for Biomedical Image Segmentation:** https://arxiv.org/abs/1505.04597
 - **EBHI-Seg: A Novel Enteroscope Biopsy Histopathological Haematoxylin and Eosin Image Dataset for Image Segmentation Tasks:** https://arxiv.org/abs/2212.00532
