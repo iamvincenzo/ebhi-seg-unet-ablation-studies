@@ -342,7 +342,6 @@ def main(args):
 """ Starting the simulation. """ 
 if __name__ == "__main__":
     args = get_args()
-
     # if folder doesn't exist, then create it
     if not os.path.isdir(args.checkpoint_path):
         os.makedirs(args.checkpoint_path)
