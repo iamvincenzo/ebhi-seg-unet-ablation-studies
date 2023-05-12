@@ -87,6 +87,9 @@ The **results** are contained within the "final_considerations.pdf" file.
 | plt_weights_distr     | Plots the filters as images to visualize CNN kernels        |
 
 
+[embed]./final_considerations.pdf[/embed]
+
+
 # Studi di ablazione dell'architettura di rete UNet addestrata sul dataset EBHI-Seg (ITA)
 
 Il task di deep-learning in questione consiste nell'esecuzione di studi di ablazione sull'architettura di rete UNet addestrata sul dataset EBHI-Seg. Pertanto, i moduli Python che compongono il progetto sono:
