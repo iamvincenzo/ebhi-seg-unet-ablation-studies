@@ -25,12 +25,12 @@ def clean_dataset(args):
 
         print(f"Class analysis: {c}...")
 
-        # removing images without corresponding masks
+        # removing images without their corresponding masks
         for image_file in missing_masks:
             os.remove(os.path.join(imgs_path, image_file))
             print(f'\tRemoved image file: {image_file}')
 
-        # removoving masks without corresponding images
+        # removoving masks without their corresponding images
         for label_file in missing_images:
             os.remove(os.path.join(masks_path, label_file))
             print(f'\tRemoved mask file: {label_file}')
