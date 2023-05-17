@@ -260,6 +260,8 @@ def bar_plotting(l0, l1, l2, metric):
         k0, k1 = 'train_prec', 'abl_prec'
     elif metric == 'rec_class_test_mean':
         k0, k1 = 'train_rec', 'abl_rec'
+    elif metric == 'dc_class_test_mean':
+        k0, k1 = 'train_dc', 'abl_dc'
 
     df = pd.DataFrame({k0: l0, k1: l1, 'drop': l2}, index=classes)
 
@@ -279,6 +281,8 @@ def area_plotting(l0, l1, l2, metric, stckd=True, subplts=True):
         k0, k1 = 'train_prec', 'abl_prec'
     elif metric == 'rec_class_test_mean':
         k0, k1 = 'train_rec', 'abl_rec'
+    elif metric == 'dc_class_test_mean':
+        k0, k1 = 'train_dc', 'abl_dc'
 
     df = pd.DataFrame({k0: l0, k1: l1, 'drop': l2}, index=classes)
 
@@ -297,6 +301,8 @@ def line_plotting(l0, l1, metric):
         k0, k1 = 'train_prec', 'abl_prec'
     elif metric == 'rec_class_test_mean':
         k0, k1 = 'train_rec', 'abl_rec'
+    elif metric == 'dc_class_test_mean':
+        k0, k1 = 'train_dc', 'abl_dc'
 
     df = pd.DataFrame({k0: l0, k1: l1}, index=classes)
 
