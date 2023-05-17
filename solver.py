@@ -395,6 +395,7 @@ class Solver(object):
     def quantify_change_nn_parameters(self, tensor1, tensor2):
         diff = tensor2 - tensor1
 
+        # p=2 "Frobenius norm"
         norm = torch.norm(diff, p=2)
 
         return norm
