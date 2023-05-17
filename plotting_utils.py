@@ -107,6 +107,7 @@ def plot_samples(images, mask, labels, args):
             else:
                                                     # from [3, 244, 244] to [244, 244, 3]
                 plt.imshow((images[j].cpu().numpy()).transpose(1, 2, 0))
+                                                    # inverse-search: from number (value) to label (key)
             plt.title(f'{list(class_dic.keys())[list(class_dic.values()).index(labels[j].item())]}') # class of the sample
         # row-2 contains masks
         else:
