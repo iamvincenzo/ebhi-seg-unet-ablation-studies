@@ -24,7 +24,7 @@ class Solver(object):
     """ Initialize configurations. """
     def __init__(self, train_loader, test_loader, device, writer, args):
         self.args = args
-        self.model_name = f'ebhi_seg_{self.args.model_name}.pth'
+        self.model_name = f'ebhi_seg_{self.args.model_name}.pt'
 
         # model selection
         if self.args.pretrained_net == True:

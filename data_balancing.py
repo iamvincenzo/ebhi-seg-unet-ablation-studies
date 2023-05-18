@@ -1,3 +1,7 @@
+###################################################################################################################################
+# SOME REFERENCE: https://github.com/aladdinpersson/Machine-Learning-Collection/tree/master/ML/Pytorch/Basics/Imbalanced_classes #
+##################################################################################################################################
+
 from torch.utils.data import WeightedRandomSampler, DataLoader
 from dataloader_utils import get_proportioned_dataset, EBHIDataset
 

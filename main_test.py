@@ -7,6 +7,7 @@ from torch.utils.tensorboard import SummaryWriter
 
 from solver import Solver
 from data_cleaning import remove_aug
+from data_cleaning import clean_dataset
 from data_augmentation import AugmentData
 from data_balancing import BalanceDataset
 from dataloader_utils import EBHIDataset
@@ -234,11 +235,10 @@ def main(args):
     # setting fig-style
     set_default()
 
-    # """ Dataset cleaning:
-    #     it has to be executed only the first time you unzip dataset 
-    #     because Low-grade IN: 639(imags), 637(masks). """
-    # from data_cleaning import clean_dataset
-    # clean_dataset(args)
+    """ Dataset cleaning:
+        it has to be executed only the first time you unzip dataset 
+        because Low-grade IN: 639(imags), 637(masks). """
+    clean_dataset(args)
 
     """ Data augmentation with albumentations: remove augmented 
         images if in the previous experiment we used data augmentation. """
