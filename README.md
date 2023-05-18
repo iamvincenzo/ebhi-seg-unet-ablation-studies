@@ -23,7 +23,7 @@ The objective of this deep-learning task is to conduct ablation studies on the U
 
 - `solver.py`: This module includes various methods for training, validation, and conducting ablation studies after training the model. It also provides functionality for saving and loading the model, visualizing model weights, activations, and kernels.
 
-- ablation_studies.py: This module is responsible for executing ablation studies based on sensitivity analysis and pruning of network modules.
+- `ablation_studies.py`: This module is responsible for executing ablation studies based on sensitivity analysis and pruning of network modules.
 
 <!-- - results_analysis.py: This module (ad-hoc) is specifically created to obtain the best network configurations based on the analysis of statistics collected during training. Additionally, it allows for visualizing the results of ablation studies, based on the analysis of statistics collected during the execution of ablation studies.-->
 
@@ -188,27 +188,27 @@ Happy coding!
 
 Il task di deep-learning in questione consiste nell'esecuzione di studi di ablazione sull'architettura di rete UNet addestrata sul dataset EBHI-Seg. Pertanto, i moduli Python che compongono il progetto sono:
 
-- main_test.py: è il modulo responsabile del lancio della simulazione. Al suo interno, vengono utilizzati altri moduli, tra cui:
+- `main_test.py`: è il modulo responsabile del lancio della simulazione. Al suo interno, vengono utilizzati altri moduli, tra cui:
   (i) moduli per la gestione dei dati di training/validation (generazione dataloader, bilanciamento, aumento).
   (ii) moduli per il training e la validazione.
   (iii) moduli per eseguire gli studi di ablazione sul modello addestrato.
 
-- data_cleaning.py: è il modulo responsabile per la pulizia automatica dei dati. In particolare, durante l'analisi dei dati, è stato osservato che una classe conteneva due immagini senza la corrispondente maschera binaria, quindi sono state rimosse. Inoltre, fornisce una funzione per eliminare le immagini generate dal modulo "data_augmentation.py".
+- `data_cleaning.py`: è il modulo responsabile per la pulizia automatica dei dati. In particolare, durante l'analisi dei dati, è stato osservato che una classe conteneva due immagini senza la corrispondente maschera binaria, quindi sono state rimosse. Inoltre, fornisce una funzione per eliminare le immagini generate dal modulo "data_augmentation.py".
 
-- dataloader_utils.py: è il modulo responsabile per la generazione di dataloader ben bilanciati per il training e la validazione.
+- `dataloader_utils.py`: è il modulo responsabile per la generazione di dataloader ben bilanciati per il training e la validazione.
 
-- data_augmentation.py: è il modulo respondabile per supporto automatico al processo di data-augmentation.
+- `data_augmentation.py`: è il modulo respondabile per supporto automatico al processo di data-augmentation.
 
-- data_balancing.py: è il modulo responsabile per la creazione di un dataloader di training in cui gli esempi di tutte le classi vengono presentati lo stesso numero di volte, garantendo così un apprendimento equo delle classi da parte della rete.
+- `data_balancing.py`: è il modulo responsabile per la creazione di un dataloader di training in cui gli esempi di tutte le classi vengono presentati lo stesso numero di volte, garantendo così un apprendimento equo delle classi da parte della rete.
 
-- metrics.py: è un modulo che contiene diverse metriche e funzioni di loss utilizzate durante il training e la validazione.
+- `metrics.py`: è un modulo che contiene diverse metriche e funzioni di loss utilizzate durante il training e la validazione.
 
-- model.py e arc_change_net.py: sono moduli che contengono un'implementazione dell'architettura di rete UNet. In particolare, il secondo modulo offre un'architettura più personalizzabile in termini di profondità (numero di layer della rete), ampiezza (numero di neuroni o filtri per ogni layer), uso di tecniche di normalizzazione e altro.
+- `model.py` e `arc_change_net.py`: sono moduli che contengono un'implementazione dell'architettura di rete UNet. In particolare, il secondo modulo offre un'architettura più personalizzabile in termini di profondità (numero di layer della rete), ampiezza (numero di neuroni o filtri per ogni layer), uso di tecniche di normalizzazione e altro.
 
-- plotting_utils.py: contiene alcune funzioni utili per il plotting di metriche, kernel, attivazioni e altro ancora.
+- `plotting_utils.py`: contiene alcune funzioni utili per il plotting di metriche, kernel, attivazioni e altro ancora.
 
-- solver.py: è il modulo che include vari metodi per il training, la validazione e l'esecuzione degli studi di ablazione dopo l'addestramento del modello. Fornisce anche funzionalità per salvare e caricare il modello, visualizzare i pesi del modello, le attivazioni e i kernel.
+- `solver.py`: è il modulo che include vari metodi per il training, la validazione e l'esecuzione degli studi di ablazione dopo l'addestramento del modello. Fornisce anche funzionalità per salvare e caricare il modello, visualizzare i pesi del modello, le attivazioni e i kernel.
 
-- ablation_studies.py: è il modulo responsabile per l'esecuzione degli studi di ablazione basati sull'analisi di sensitività e il pruning dei moduli della rete.
+- `ablation_studies.py`: è il modulo responsabile per l'esecuzione degli studi di ablazione basati sull'analisi di sensitività e il pruning dei moduli della rete.
 
 <!-- - results_analysis.py: è un modulo (ad-hoc) appositamente creato per ottenere le migliori configurazioni di rete basandosi sull'analisi delle statistiche raccolte durante il training. Inoltre, consente di visualizzare i risultati degli studi di ablazione, basandosi sempre sull'analisi delle statistiche raccolte durante l'esecuzione degli studi di ablazione. -->
