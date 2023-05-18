@@ -202,13 +202,26 @@ def get_args():
                         help='the number of iterations for the pruning process')
     ###################################################################
 
-     # weights-analysis 
+    # weights-analysis 
     ###################################################################
     parser.add_argument('--weights_distr_histo', action='store_true',
                         help='plots the histogram of weights distribution')
     parser.add_argument('--plt_weights_distr', action='store_true',
                         help='plots the filters as iamges to visualize CNN kernels')
     ###################################################################
+
+    # skip-connections
+    ###################################################################
+    parser.add_argument('--no_skeep_7', action='store_true',
+                        help='removes the first skip connection from the bottom up')
+    parser.add_argument('--no_skeep_5', action='store_true',
+                        help='removes the second skip connection from the bottom up')
+    parser.add_argument('--no_skeep_3', action='store_true',
+                        help='removes the third skip connection from the bottom up')
+    parser.add_argument('--no_skeep_1', action='store_true',
+                        help='removes the last skip connection from the bottom up')
+    ###################################################################
+
 
     return parser.parse_args()
 
@@ -291,7 +304,7 @@ def main(args):
     writer.close()
 
     # showing some samples
-    print(f'First sample in train-set: {img_files_train[0]}, {mask_files_train[0]}')
+    print(f'\nFirst sample in train-set: {img_files_train[0]}, {mask_files_train[0]}')
     print(f'First sample in test-set: {img_files_test[0]}, {mask_files_test[0]}\n')
 
     # Check the validity of some cmd parameters
