@@ -115,11 +115,7 @@ The **results** are contained within the `final_considerations.pdf` file.
   - [random](https://docs.python.org/3/library/random.html)
   - [argparse](https://docs.python.org/3/library/argparse.html)
   - [torch.utils.tensorboard](https://pytorch.org/docs/stable/tensorboard.html)
-  - [torchmetrics.classification.BinaryRecall](https://torchmetrics.readthedocs.io/en/latest/classification.html#torchmetrics.classification.BinaryRecall)
-  - [torchmetrics.classification.BinaryF1Score](https://torchmetrics.readthedocs.io/en/latest/classification.html#torchmetrics.classification.BinaryF1Score)
-  - [torchmetrics.classification.BinaryAccuracy](https://torchmetrics.readthedocs.io/en/latest/classification.html#torchmetrics.classification.BinaryAccuracy)
-  - [torchmetrics.classification.BinaryPrecision](https://torchmetrics.readthedocs.io/en/latest/classification.html#torchmetrics.classification.BinaryPrecision)
-  - [torchmetrics.classification.BinaryJaccardIndex](https://torchmetrics.readthedocs.io/en/latest/classification.html#torchmetrics.classification.BinaryJaccardIndex)
+  - [torchmetrics](https://torchmetrics.readthedocs.io/en/stable/)
   - [pandas](https://pandas.pydata.org/)
   - [torch.optim](https://pytorch.org/docs/stable/optim.html)
 
