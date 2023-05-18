@@ -172,7 +172,7 @@ Once you have completed the installation steps and downloaded the dataset, you n
 After setting the correct file paths, you can run the `main_test.py` file.
 
 ```shell
-python main_test.py --run_name run_final_2t --model_name unet_final_2t --random_seed 2 --opt Adam --arc_change_net --use_inst_norm --lr 0.001 --weights_init --dataset_aug 3 --balanced_trainset --early_stopping 6
+python main_test.py --run_name run_final_2t --model_name unet_final_2t --random_seed 2 --opt Adam --arc_change_net --use_inst_norm --lr 0.001 --weights_init --balanced_trainset --early_stopping 6
 ```
 
 Make sure you are in the project directory and have activated your virtual environment (if applicable) before running the above command.
