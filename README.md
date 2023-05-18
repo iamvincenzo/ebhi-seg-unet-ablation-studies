@@ -27,7 +27,7 @@ The objective of this deep-learning task is to conduct ablation studies on the U
 
 <!-- - results_analysis.py: This module (ad-hoc) is specifically created to obtain the best network configurations based on the analysis of statistics collected during training. Additionally, it allows for visualizing the results of ablation studies, based on the analysis of statistics collected during the execution of ablation studies.-->
 
-The **results** are contained within the "final_considerations.pdf" file.
+The **results** are contained within the `final_considerations.pdf` file.
 
 **The dataset can be downloaded at:** https://paperswithcode.com/dataset/ebhi-seg
 
@@ -85,6 +85,104 @@ The **results** are contained within the "final_considerations.pdf" file.
 | num_iterations        | The number of iterations for the pruning process            |
 | weights_distr_histo   | Plots the histogram of weights distribution                 |
 | plt_weights_distr     | Plots the filters as images to visualize CNN kernels        |
+
+### Prerequisites
+
+- [Python](https://www.python.org/downloads/) 3.5 or later installed on your system.
+- The following modules:
+  - [os](https://docs.python.org/3/library/os.html)
+  - [json](https://docs.python.org/3/library/json.html)
+  - [torch](https://pytorch.org/)
+  - [numpy](https://numpy.org/)
+  - [tqdm](https://tqdm.github.io/)
+  - [matplotlib](https://matplotlib.org/)
+  - [torchvision](https://pytorch.org/vision/stable/index.html)
+  - [torch.nn.utils.prune](https://pytorch.org/docs/stable/nn.utils.prune.html)
+  - [cv2](https://docs.opencv.org/4.5.2/)
+  - [PIL](https://pillow.readthedocs.io/en/stable/)
+  - [albumentations](https://albumentations.ai/)
+  - [dataloader_utils](https://github.com/your-username/dataloader_utils)
+  - [torch.utils.data](https://pytorch.org/docs/stable/data.html)
+  - [math](https://docs.python.org/3/library/math.html)
+  - [random](https://docs.python.org/3/library/random.html)
+  - [argparse](https://docs.python.org/3/library/argparse.html)
+  - [torch.utils.tensorboard](https://pytorch.org/docs/stable/tensorboard.html)
+  - [torchmetrics.classification.BinaryRecall](https://torchmetrics.readthedocs.io/en/latest/classification.html#torchmetrics.classification.BinaryRecall)
+  - [torchmetrics.classification.BinaryF1Score](https://torchmetrics.readthedocs.io/en/latest/classification.html#torchmetrics.classification.BinaryF1Score)
+  - [torchmetrics.classification.BinaryAccuracy](https://torchmetrics.readthedocs.io/en/latest/classification.html#torchmetrics.classification.BinaryAccuracy)
+  - [torchmetrics.classification.BinaryPrecision](https://torchmetrics.readthedocs.io/en/latest/classification.html#torchmetrics.classification.BinaryPrecision)
+  - [torchmetrics.classification.BinaryJaccardIndex](https://torchmetrics.readthedocs.io/en/latest/classification.html#torchmetrics.classification.BinaryJaccardIndex)
+  - [pandas](https://pandas.pydata.org/)
+  - [torch.optim](https://pytorch.org/docs/stable/optim.html)
+
+Make sure to install these modules using `pip` or any other package manager like `miniconda` before running the code.
+
+- [Python](https://www.python.org/downloads/) 3.5 or later installed on your system.
+- [Miniconda](https://docs.conda.io/en/latest/miniconda.html) installed on your system (optional but recommended).
+
+### Installation
+
+1. Clone this repository to your local machine or download the ZIP file and extract its contents.
+
+   ```shell
+   git clone https://github.com/your-username/repository-name.git
+   ```
+
+2. Navigate to the project directory.
+
+   ```shell
+   cd repository-name
+   ```
+
+3. (Optional) Create a virtual environment using Miniconda to isolate the project dependencies. If you don't have Miniconda installed, you can skip this step and proceed with the regular package installation.
+
+   - Create a new virtual environment.
+
+     ```shell
+     conda create -n myenv python=3.9
+     ```
+
+   - Activate the virtual environment.
+
+     - For Windows:
+
+       ```shell
+       conda activate myenv
+       ```
+
+     - For macOS/Linux:
+
+       ```shell
+       source activate myenv
+       ```
+
+4. Install the required modules.
+
+   ```shell
+   conda install -c conda-forge matplotlib pytorch numpy tqdm torchvision opencv pillow pandas
+   pip install albumentations dataloader_utils torchmetrics
+   ```
+
+5. Download the dataset from [https://figshare.com/articles/dataset/EBHI-SEG/21540159/1](https://figshare.com/articles/dataset/EBHI-SEG/21540159/1) and extract it to a suitable location on your system.
+
+### Usage
+
+Once you have completed the installation steps and downloaded the dataset, you need to define the correct file paths in the main_test.py file. Open the main_test.py file and locate the variables where the file paths are defined. Update those variables with the appropriate paths to the dataset on your system.
+
+After setting the correct file paths, you can run the `main_test.py` file.
+
+```shell
+python main_test.py --run_name run_final_2t --model_name unet_final_2t --random_seed 2 --opt Adam --arc_change_net --use_inst_norm --lr 0.001 --weights_init --balanced_trainset --early_stopping 6
+```
+
+Make sure you are in the project directory and have activated your virtual environment (if applicable) before running the above command.
+
+### Additional Notes
+
+- Modify the `main_test.py` file according to your needs or replace it with your own Python script.
+
+Happy coding!
+
 
 # Studi di ablazione dell'architettura di rete UNet addestrata sul dataset EBHI-Seg (ITA)
 
