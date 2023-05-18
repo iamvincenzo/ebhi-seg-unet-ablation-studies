@@ -86,6 +86,53 @@ The **results** are contained within the "final_considerations.pdf" file.
 | weights_distr_histo   | Plots the histogram of weights distribution                 |
 | plt_weights_distr     | Plots the filters as images to visualize CNN kernels        |
 
+## How to Run
+
+To run the `main_test.py` file in this repository, follow the example instructions below.
+
+python main_test.py --run_name run_final_2t --model_name unet_final_2t --random_seed 2 --opt Adam --arc_change_net --use_inst_norm --lr 0.001 --weights_init --dataset_aug 3 --balanced_trainset --early_stopping 6
+
+### Prerequisites
+
+### Prerequisites
+
+- [Python](https://www.python.org/downloads/) 3.5 or later installed on your system.
+- The following modules:
+  - [os](https://docs.python.org/3/library/os.html)
+  - [json](https://docs.python.org/3/library/json.html)
+  - [torch](https://pytorch.org/)
+  - [numpy](https://numpy.org/)
+  - [tqdm](https://tqdm.github.io/)
+  - [matplotlib](https://matplotlib.org/)
+  - [torchvision](https://pytorch.org/vision/stable/index.html)
+  - [torch.nn.utils.prune](https://pytorch.org/docs/stable/nn.utils.prune.html)
+  - [cv2](https://docs.opencv.org/4.5.2/)
+  - [PIL](https://pillow.readthedocs.io/en/stable/)
+  - [albumentations](https://albumentations.ai/)
+  - [dataloader_utils](https://github.com/your-username/dataloader_utils)
+  - [torch.utils.data](https://pytorch.org/docs/stable/data.html)
+  - [math](https://docs.python.org/3/library/math.html)
+  - [random](https://docs.python.org/3/library/random.html)
+  - [argparse](https://docs.python.org/3/library/argparse.html)
+  - [torch.utils.tensorboard](https://pytorch.org/docs/stable/tensorboard.html)
+  - [torchmetrics.classification.BinaryRecall](https://torchmetrics.readthedocs.io/en/latest/classification.html#torchmetrics.classification.BinaryRecall)
+  - [torchmetrics.classification.BinaryF1Score](https://torchmetrics.readthedocs.io/en/latest/classification.html#torchmetrics.classification.BinaryF1Score)
+  - [torchmetrics.classification.BinaryAccuracy](https://torchmetrics.readthedocs.io/en/latest/classification.html#torchmetrics.classification.BinaryAccuracy)
+  - [torchmetrics.classification.BinaryPrecision](https://torchmetrics.readthedocs.io/en/latest/classification.html#torchmetrics.classification.BinaryPrecision)
+  - [torchmetrics.classification.BinaryJaccardIndex](https://torchmetrics.readthedocs.io/en/latest/classification.html#torchmetrics.classification.BinaryJaccardIndex)
+  - [pandas](https://pandas.pydata.org/)
+  - [torch.optim](https://pytorch.org/docs/stable/optim.html)
+
+Make sure to install these modules using `pip` or any other package manager like `miniconda` before running the code.
+
+### Installation
+
+1. Clone this repository to your local machine or download the ZIP file and extract its contents.
+
+   ```shell
+   git clone https://github.com/your-username/repository-name.git
+
+
 # Studi di ablazione dell'architettura di rete UNet addestrata sul dataset EBHI-Seg (ITA)
 
 Il task di deep-learning in questione consiste nell'esecuzione di studi di ablazione sull'architettura di rete UNet addestrata sul dataset EBHI-Seg. Pertanto, i moduli Python che compongono il progetto sono:
