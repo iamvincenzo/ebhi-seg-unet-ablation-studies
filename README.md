@@ -44,7 +44,7 @@ The **results** are contained within the `final_considerations.pdf` file.
 | PaperConfiguration      | -               | 0.8345           | 0.7595          | 0.7741       | 0.7667         |
 | MyUNet18-0              | **0.0542**      | 0.9483           | 0.9621          | 0.9411       | 0.9514         |
 | MyUNet3-0               |0.0566           | 0.9461           | 0.9412          | **0.9586**   | 0.9498         |
-| MyUNetFinal             | 0.0564          | **0.9506**       | **0.9639**      | 0.9443       | 0.9539         |
+| MyUNetFinal             | 0.0564          | **0.9506**       | **0.9639**      | 0.9443       | **0.9539**     |
 | MyUNet0-3 (worst)       | 0.2237          | 0.7642           | 1.000           | 0.6289       | 0.7721         |
 
 ## The parameters that can be provided through the command line and allow customization of the execution are:
