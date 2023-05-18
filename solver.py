@@ -266,7 +266,7 @@ class Solver(object):
                     # early stopping with a patience of 1 and a minimum of N epochs
                     if epoch > self.args.early_stopping:  
                         if avg_test_losses[-1] >= avg_test_losses[-2]:
-                            print('\nEarly Stopping Triggered With Patience 1')
+                            print(f'\nEarly Stopping Triggered With Patience {self.args.early_stopping}')
                             # save before stop training
                             self.save_model()  
                             earlystopping = True
