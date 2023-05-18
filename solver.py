@@ -2,12 +2,14 @@ import os
 import json
 import torch
 import numpy as np
+import torchsummary
 from tqdm import tqdm
 import torch.nn as nn
 import torch.optim as optim
 from datetime import datetime
 import torchvision.transforms as T
 import torchvision.transforms.functional as TF
+
 
 from model import UNet
 from arc_change_net import UNET
@@ -40,6 +42,14 @@ class Solver(object):
 
         # model definition
         self.net = model.to(device)
+
+        # get input shape
+        inputs, _, _ = next(iter(train_loader))
+        input_size = inputs.shape[1:]
+
+        print("\nModel summary: ")
+        torchsummary.summary(model=self.net, 
+                             input_size=input_size)
 
         # load a pretrained model for 
         # resuming training or to execute ablation studies
@@ -91,7 +101,7 @@ class Solver(object):
     def save_model(self):
         check_path = os.path.join(self.args.checkpoint_path, self.model_name)
         torch.save(self.net.state_dict(), check_path)
-        print('\nModel saved...\n')
+        print('\n\nModel saved...\n')
 
     """ Method used to load the model. """
     def load_model(self, device):
