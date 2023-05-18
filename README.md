@@ -41,10 +41,12 @@ The **results** are contained within the `final_considerations.pdf` file.
 
 | Model                   | Validation-loss | Macro Dice-Ratio | Macro Precision | Macro Recall |
 |-------------------------|-----------------|------------------|-----------------|--------------|
-| Paper configuration     | **0.0542** ||||
-| MyUNet18-0|||||
-| MyUNet3-0|||||
-| MyUNetFinal |
+| Paper configuration     | -               | **0.8345**       | **0.7595**      | **0.7741**   |
+| MyUNet18-0              | **0.0542**      | 0.9483           | 0.9621          | 0.9411       |
+| MyUNet3-0               |0.0566           | 0.9461           | 0.9412          | **0.9586**   |
+| MyUNetFinal             | 0.0564          | **0.9506**       | **0.9639**      | 0.9443       |
+| MyUNet0-3 (worst)       | 0.2237          | 0.7642           | 1.000           | 0.6289       |
+
 ## The parameters that can be provided through the command line and allow customization of the execution are:
 
 
