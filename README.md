@@ -50,50 +50,54 @@ The **results** are contained within the `final_considerations.pdf` file.
 ## The parameters that can be provided through the command line and allow customization of the execution are:
 
 
-| Key                   | Value Description                                          |
-|-----------------------|------------------------------------------------------------|
-| run_name              | The name assigned to the current run                        |
-| model_name            | The name of the model to be saved or loaded                 |
-| epochs                | The total number of training epochs                         |
-| bs_train              | The batch size for training data                            |
-| bs_test               | The batch size for test data                                |
-| workers               | The number of workers in the data loader                    |
-| print_every           | The frequency of printing losses during training            |
-| random_seed           | The random seed used to ensure reproducibility              |
-| lr                    | The learning rate for optimization                          |
-| loss                  | The loss function used for model optimization               |
-| val_custom_loss       | The weight of the jac_loss in the overall loss function     |
-| opt                   | The optimizer used for training                             |
-| early_stopping        | The threshold for early stopping during training            |
-| resume_train          | Determines whether to load the model from a checkpoint      |
-| use_batch_norm        | Indicates whether to use batch normalization layers in each conv layer |
-| use_double_batch_norm | Indicates whether to use 2 batch normalization layers in each conv layer |
-| use_inst_norm         | Indicates whether to use instance normalization layers in each conv layer |
-| use_double_inst_norm  | Indicates whether to use 2 instance normalization layers in each conv layer |
-| weights_init          | Determines whether to use weights initialization            |
-| th                    | The threshold used to split the dataset into train and test subsets |
-| dataset_path          | The path to save or retrieve the dataset                    |
-| checkpoint_path       | The path to save the trained model                          |
-| pretrained_net        | Indicates whether to load a pretrained model on BRAIN-MRI   |
-| arc_change_net        | Indicates whether to load a customizable model |
+| Argument              | Description                                                                  |
+|-----------------------|------------------------------------------------------------------------------|
+| run_name              | The name assigned to the current run                                         |
+| model_name            | The name of the model to be saved or loaded                                  |
+| epochs                | The total number of training epochs                                          |
+| bs_train              | The batch size for training data                                             |
+| bs_test               | The batch size for test data                                                 |
+| workers               | The number of workers in the data loader                                     |
+| print_every           | The frequency of printing losses during training                             |
+| random_seed           | The random seed used to ensure reproducibility                               |
+| lr                    | The learning rate for optimization                                           |
+| loss                  | The loss function used for model optimization                                |
+| val_custom_loss       | The weight of the jac_loss in the overall loss function                      |
+| opt                   | The optimizer used for training                                              |
+| early_stopping        | The threshold for early stopping during training                             |
+| resume_train          | Determines whether to load the model from a checkpoint                       |
+| use_batch_norm        | Indicates whether to use batch normalization layers in each conv layer       |
+| use_double_batch_norm | Indicates whether to use 2 batch normalization layers in each conv layer     |
+| use_inst_norm         | Indicates whether to use instance normalization layers in each conv layer    |
+| use_double_inst_norm  | Indicates whether to use 2 instance normalization layers in each conv layer  |
+| weights_init          | Determines whether to use weights initialization                             |
+| th                    | The threshold used to split the dataset into train and test subsets          |
+| dataset_path          | The path to save or retrieve the dataset                                     |
+| checkpoint_path       | The path to save the trained model                                           | 
+| pretrained_net        | Indicates whether to load a pretrained model on BRAIN-MRI                    |
+| arc_change_net        | Indicates whether to load a customizable model                               |
 | features              | A list of feature values (number of filters i.e., neurons in each layer)     |
-| norm_input            | Indicates whether to normalize the input data               |
+| norm_input            | Indicates whether to normalize the input data                                |
 | apply_transformations | Indicates whether to apply transformations to images and corresponding masks |
-| dataset_aug           | Determines the type of data augmentation applied to each class |
-| balanced_trainset     | Generates a well-balanced train_loader for training         |
-| global_ablation       | Initiates an ablation study using global_unstructured or l1_unstructured |
-| grouped_pruning       | Initiates an ablation study using global_unstructured       |
-| all_one_by_one        | Initiates an ablation study using random_structured or random_unstructured |
-| selective_ablation    | Initiates an ablation study using random_structured or random_unstructured |
-| single_mod            | Initiates an ablation study with only one module            |
-| double_mod            | Initiates an ablation study with two modules                |
-| random_structured     | Initiates an ablation study using random_structured         |
-| random_unstructured   | Initiates an ablation study using random_unstructured       |
-| conv2d_prune_amount   | The amount of pruning applied to conv2d layers              |
-| linear_prune_amount   | The amount of pruning applied to linear layers              |
-| num_iterations        | The number of iterations for the pruning process            |
-| weights_distr_histo   | Plots the histogram of weights distribution                 |
-| plt_weights_distr     | Plots the filters as images to visualize CNN kernels        |
+| dataset_aug           | Determines the type of data augmentation applied to each class               |
+| balanced_trainset     | Generates a well-balanced train_loader for training                          |
+| global_ablation       | Initiates an ablation study using global_unstructured or l1_unstructured     |
+| grouped_pruning       | Initiates an ablation study using global_unstructured                        |
+| all_one_by_one        | Initiates an ablation study using random_structured or random_unstructured   |
+| selective_ablation    | Initiates an ablation study using random_structured or random_unstructured   |
+| single_mod            | Initiates an ablation study with only one module                             |
+| double_mod            | Initiates an ablation study with two modules                                 |
+| random_structured     | Initiates an ablation study using random_structured                          |
+| random_unstructured   | Initiates an ablation study using random_unstructured                        |
+| conv2d_prune_amount   | The amount of pruning applied to conv2d layers                               |
+| linear_prune_amount   | The amount of pruning applied to linear layers                               |
+| num_iterations        | The number of iterations for the pruning process                             |
+| weights_distr_histo   | Plots the histogram of weights distribution                                  |
+| plt_weights_distr     | Plots the filters as images to visualize CNN kernels                         |
+| no_skeep_7            | Removes the first skip connection from the bottom up                         |
+| no_skeep_5            | Removes the second skip connection from the bottom up                        |
+| no_skeep_3            | Removes the third skip connection from the bottom up                         |
+| no_skeep_1            | Removes the last skip connection from the bottom up                          |
 
 ### Prerequisites
 
