@@ -37,7 +37,14 @@ The **results** are contained within the `final_considerations.pdf` file.
 - **EBHI-Seg: A Novel Enteroscope Biopsy Histopathological Haematoxylin and Eosin Image Dataset for Image Segmentation Tasks:** https://arxiv.org/abs/2212.00532
 - **Ablation Studies in Artificial Neural Networks:** https://arxiv.org/abs/1901.08644
 
+## Some results:
 
+| Model                   | Validation-loss | Macro Dice-Ratio | Macro Precision | Macro Recall |
+|-------------------------|-----------------|------------------|-----------------|--------------|
+| Paper configuration     | **0.0542** ||||
+| MyUNet18-0|||||
+| MyUNet3-0|||||
+| MyUNetFinal |
 ## The parameters that can be provided through the command line and allow customization of the execution are:
 
 
