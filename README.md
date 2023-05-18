@@ -167,7 +167,9 @@ Make sure to install these modules using `pip` or any other package manager like
 
 ### Usage
 
-Once you have completed the installation steps, you can run the `main_file.py` file.
+Once you have completed the installation steps and downloaded the dataset, you need to define the correct file paths in the main_test.py file. Open the main_test.py file and locate the variables where the file paths are defined. Update those variables with the appropriate paths to the dataset on your system.
+
+After setting the correct file paths, you can run the `main_test.py` file.
 
 ```shell
 python main_test.py --run_name run_final_2t --model_name unet_final_2t --random_seed 2 --opt Adam --arc_change_net --use_inst_norm --lr 0.001 --weights_init --dataset_aug 3 --balanced_trainset --early_stopping 6
