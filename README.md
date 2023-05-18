@@ -163,6 +163,8 @@ Make sure to install these modules using `pip` or any other package manager like
    pip install albumentations dataloader_utils torchmetrics
    ```
 
+5. Download the dataset from [https://figshare.com/articles/dataset/EBHI-SEG/21540159/1](https://figshare.com/articles/dataset/EBHI-SEG/21540159/1) and extract it to a suitable location on your system.
+
 ### Usage
 
 Once you have completed the installation steps, you can run the `main_file.py` file.
