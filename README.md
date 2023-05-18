@@ -41,7 +41,7 @@ The **results** are contained within the `final_considerations.pdf` file.
 
 | Model                   | Validation-loss | Macro Dice-Ratio | Macro Precision | Macro Recall |
 |-------------------------|-----------------|------------------|-----------------|--------------|
-| Paper configuration     | -               | **0.8345**       | **0.7595**      | **0.7741**   |
+| PaperConfiguration      | -               | **0.8345**       | **0.7595**      | **0.7741**   |
 | MyUNet18-0              | **0.0542**      | 0.9483           | 0.9621          | 0.9411       |
 | MyUNet3-0               |0.0566           | 0.9461           | 0.9412          | **0.9586**   |
 | MyUNetFinal             | 0.0564          | **0.9506**       | **0.9639**      | 0.9443       |
