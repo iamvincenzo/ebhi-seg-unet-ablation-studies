@@ -86,12 +86,6 @@ The **results** are contained within the "final_considerations.pdf" file.
 | weights_distr_histo   | Plots the histogram of weights distribution                 |
 | plt_weights_distr     | Plots the filters as images to visualize CNN kernels        |
 
-## How to Run
-
-To run the `main_test.py` file in this repository, follow the example instructions below.
-
-python main_test.py --run_name run_final_2t --model_name unet_final_2t --random_seed 2 --opt Adam --arc_change_net --use_inst_norm --lr 0.001 --weights_init --dataset_aug 3 --balanced_trainset --early_stopping 6
-
 ### Prerequisites
 
 - [Python](https://www.python.org/downloads/) 3.5 or later installed on your system.
@@ -171,19 +165,17 @@ Make sure to install these modules using `pip` or any other package manager like
 
 ### Usage
 
-Once you have completed the installation steps, you can run the `main.py` file.
+Once you have completed the installation steps, you can run the `main_file.py` file.
 
 ```shell
-python main.py
+python main_test.py --run_name run_final_2t --model_name unet_final_2t --random_seed 2 --opt Adam --arc_change_net --use_inst_norm --lr 0.001 --weights_init --dataset_aug 3 --balanced_trainset --early_stopping 6
 ```
 
 Make sure you are in the project directory and have activated your virtual environment (if applicable) before running the above command.
 
 ### Additional Notes
 
-- Modify the `main.py` file according to your needs or replace it with your own Python script.
-- Provide any additional instructions or details specific to your project.
-- If you encounter any issues or have questions, please feel free to open an issue in the GitHub repository.
+- Modify the `main_test.py` file according to your needs or replace it with your own Python script.
 
 Happy coding!
 
