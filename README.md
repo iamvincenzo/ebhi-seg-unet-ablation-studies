@@ -125,12 +125,71 @@ python main_test.py --run_name run_final_2t --model_name unet_final_2t --random_
 
 Make sure to install these modules using `pip` or any other package manager like `miniconda` before running the code.
 
+### Prerequisites
+
+- [Python](https://www.python.org/downloads/) 3.5 or later installed on your system.
+- [Miniconda](https://docs.conda.io/en/latest/miniconda.html) installed on your system (optional but recommended).
+
 ### Installation
 
 1. Clone this repository to your local machine or download the ZIP file and extract its contents.
 
    ```shell
    git clone https://github.com/your-username/repository-name.git
+   ```
+
+2. Navigate to the project directory.
+
+   ```shell
+   cd repository-name
+   ```
+
+3. (Optional) Create a virtual environment using Miniconda to isolate the project dependencies. If you don't have Miniconda installed, you can skip this step and proceed with the regular package installation.
+
+   - Create a new virtual environment.
+
+     ```shell
+     conda create -n myenv python=3.9
+     ```
+
+   - Activate the virtual environment.
+
+     - For Windows:
+
+       ```shell
+       conda activate myenv
+       ```
+
+     - For macOS/Linux:
+
+       ```shell
+       source activate myenv
+       ```
+
+4. Install the required modules.
+
+   ```shell
+   conda install -c conda-forge matplotlib pytorch numpy tqdm torchvision opencv pillow pandas
+   pip install albumentations dataloader_utils torchmetrics
+   ```
+
+### Usage
+
+Once you have completed the installation steps, you can run the `main.py` file.
+
+```shell
+python main.py
+```
+
+Make sure you are in the project directory and have activated your virtual environment (if applicable) before running the above command.
+
+### Additional Notes
+
+- Modify the `main.py` file according to your needs or replace it with your own Python script.
+- Provide any additional instructions or details specific to your project.
+- If you encounter any issues or have questions, please feel free to open an issue in the GitHub repository.
+
+Happy coding!
 
 
 # Studi di ablazione dell'architettura di rete UNet addestrata sul dataset EBHI-Seg (ITA)
