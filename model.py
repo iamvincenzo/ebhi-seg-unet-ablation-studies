@@ -114,34 +114,6 @@ class UNet(nn.Module):
             )
 
         return conv
-
-    """ Method used to define the computations needed to 
-        create the output of the neural network given its input.  # (es.)
-    def forward(self, img):                        # img --> bs x 3 x 224 x 224 (bs, ch, w, h)
-        x1 = self.down_1(img)                      # bs x 64 x 224 x 224
-        x2 = self.max_pool(x1)                     # bs x 64 x 112 x 112
-        x3 = self.down_2(x2)                       # bs x 128 x 112 x 112
-        x4 = self.max_pool(x3)                     # bs x 128 x 56 x 56
-        x5 = self.down_3(x4)                       # bs x 256 x 56 x 56
-        x6 = self.max_pool(x5)                     # bs x 256 x 28 x 28
-        x7 = self.down_4(x6)                       # bs x 512 x 28 x 28
-        x8 = self.max_pool(x7)                     # bs x 512 x 14 x 14
-        x9 = self.down_5(x8)                       # bs x 1024 x 14 x 14
-
-                                    # bs x 512 x 28 x 28 && x7 --> bs x 512 x 28 x 28
-        x = self.up_1(x9)
-        x = self.up_conv_1(torch.cat([x, x7], 1))  # bs x 512 x 28 x 28
-        x = self.up_2(x)                           # bs x 256 x 56 x 56
-        x = self.up_conv_2(torch.cat([x, x5], 1))  # bs x 256 x 56 x 56
-        x = self.up_3(x)                           # bs x 128 x 112 x 112
-        x = self.up_conv_3(torch.cat([x, x3], 1))  # bs x 128 x 112 x 112
-        x = self.up_4(x)                           # bs x 64 x 224 x 224
-        x = self.up_conv_4(torch.cat([x, x1], 1))  # bs x 64 x 224 x 224
-
-        x = self.output(x)
-        x = self.output_activation(x)              # bs x 1 x 224 x 224
-
-        return x"""
     
     """ Method used to define the computations needed to 
         create the output of the neural network given its input. """ # (es.)
