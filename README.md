@@ -94,8 +94,6 @@ python main_test.py --run_name run_final_2t --model_name unet_final_2t --random_
 
 ### Prerequisites
 
-### Prerequisites
-
 - [Python](https://www.python.org/downloads/) 3.5 or later installed on your system.
 - The following modules:
   - [os](https://docs.python.org/3/library/os.html)
@@ -124,8 +122,6 @@ python main_test.py --run_name run_final_2t --model_name unet_final_2t --random_
   - [torch.optim](https://pytorch.org/docs/stable/optim.html)
 
 Make sure to install these modules using `pip` or any other package manager like `miniconda` before running the code.
-
-### Prerequisites
 
 - [Python](https://www.python.org/downloads/) 3.5 or later installed on your system.
 - [Miniconda](https://docs.conda.io/en/latest/miniconda.html) installed on your system (optional but recommended).
