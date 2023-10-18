@@ -1,6 +1,6 @@
 # Ablation studies on UNet architecture trained on EBHI-Seg dataset (ENG)
 
-The objective of this deep-learning task is to conduct ablation studies on the UNet network architecture, which has been trained on the EBHI-Seg dataset. The project consists of the following Python modules:
+The objective of this deep-learning task is to conduct ablation studies on the U-Net network architecture, which has been trained on the EBHI-Seg dataset for histopathological image segmentation of colorectal cancer. The project consists of the following Python modules:
 
 - `main_test.py`: This module is responsible for launching the simulation. It utilizes other modules, including:
   (i) Modules for handling training/validation data (dataloader generation, balancing, augmentation).
